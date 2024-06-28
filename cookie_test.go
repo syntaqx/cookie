@@ -62,3 +62,57 @@ func TestSet(t *testing.T) {
 		t.Errorf("Expected cookie SameSite %d, got %d", options.SameSite, cookie.SameSite)
 	}
 }
+func TestGet(t *testing.T) {
+	r := httptest.NewRequest("GET", "/", nil)
+	cookieName := "myCookie"
+	cookieValue := "myValue"
+	cookie := &http.Cookie{
+		Name:  cookieName,
+		Value: cookieValue,
+	}
+	r.AddCookie(cookie)
+
+	value, err := Get(r, cookieName)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if value != cookieValue {
+		t.Errorf("Expected cookie value %s, got %s", cookieValue, value)
+	}
+}
+
+func TestGetNonexistentCookie(t *testing.T) {
+	r := httptest.NewRequest("GET", "/", nil)
+	cookieName := "nonexistentCookie"
+
+	_, err := Get(r, cookieName)
+	if err == nil {
+		t.Error("Expected error, got nil")
+	}
+}
+
+func TestRemove(t *testing.T) {
+	w := httptest.NewRecorder()
+	name := "myCookie"
+	Remove(w, name)
+	// Get the response cookies
+	cookies := w.Result().Cookies()
+	// Check if the cookie was removed correctly
+	if len(cookies) != 1 {
+		t.Errorf("Expected 1 cookie, got %d", len(cookies))
+	}
+	cookie := cookies[0]
+	if cookie.Name != name {
+		t.Errorf("Expected cookie name %s, got %s", name, cookie.Name)
+	}
+	if cookie.Value != "" {
+		t.Errorf("Expected cookie value to be empty, got %s", cookie.Value)
+	}
+	if cookie.Path != "/" {
+		t.Errorf("Expected cookie path /, got %s", cookie.Path)
+	}
+	if cookie.MaxAge != -1 {
+		t.Errorf("Expected cookie max age -1, got %d", cookie.MaxAge)
+	}
+}
