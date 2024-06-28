@@ -134,14 +134,6 @@ func PopulateFromCookies(r *http.Request, dest interface{}) error {
 				}
 				field.Set(reflect.ValueOf(timeVal))
 			}
-		case reflect.Ptr:
-			if field.IsNil() {
-				field.Set(reflect.New(fieldType.Type.Elem()))
-			}
-			err := PopulateFromCookies(r, field.Interface())
-			if err != nil {
-				return err
-			}
 		default:
 			return &UnsupportedTypeError{fieldType.Type}
 		}
