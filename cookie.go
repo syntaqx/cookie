@@ -3,6 +3,9 @@ package cookie
 import (
 	"net/http"
 	"reflect"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/gofrs/uuid/v5"
 )
@@ -29,15 +32,58 @@ func PopulateFromCookies(r *http.Request, dest interface{}) error {
 		switch field.Kind() {
 		case reflect.String:
 			field.SetString(cookie.Value)
+		case reflect.Int:
+			intVal, err := strconv.Atoi(cookie.Value)
+			if err != nil {
+				return err
+			}
+			field.SetInt(int64(intVal))
+		case reflect.Bool:
+			boolVal, err := strconv.ParseBool(cookie.Value)
+			if err != nil {
+				return err
+			}
+			field.SetBool(boolVal)
+		case reflect.Slice:
+			switch fieldType.Type.Elem().Kind() {
+			case reflect.String:
+				field.Set(reflect.ValueOf(strings.Split(cookie.Value, ",")))
+			case reflect.Int:
+				intStrings := strings.Split(cookie.Value, ",")
+				intSlice := make([]int, len(intStrings))
+				for i, s := range intStrings {
+					intVal, err := strconv.Atoi(s)
+					if err != nil {
+						return err
+					}
+					intSlice[i] = intVal
+				}
+				field.Set(reflect.ValueOf(intSlice))
+			}
 		case reflect.Array:
+			// Handle uuid.UUID separately
 			if fieldType.Type == reflect.TypeOf(uuid.UUID{}) {
 				uid, err := uuid.FromString(cookie.Value)
 				if err != nil {
 					return err
 				}
 				field.Set(reflect.ValueOf(uid))
+			}
+		case reflect.Struct:
+			if fieldType.Type == reflect.TypeOf(time.Time{}) {
+				timeVal, err := time.Parse(time.RFC3339, cookie.Value)
+				if err != nil {
+					return err
+				}
+				field.Set(reflect.ValueOf(timeVal))
 			} else {
-				return &UnsupportedTypeError{fieldType.Type}
+				// For nested structs, recursively populate
+				nestedPtr := reflect.New(fieldType.Type).Interface()
+				err := PopulateFromCookies(r, nestedPtr)
+				if err != nil {
+					return err
+				}
+				field.Set(reflect.ValueOf(nestedPtr).Elem())
 			}
 		default:
 			return &UnsupportedTypeError{fieldType.Type}
