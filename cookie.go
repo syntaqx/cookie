@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	CookieField = "cookie"
+	CookieTag = "cookie"
 )
 
 // PopulateFromCookies populates the fields of a struct based on cookie tags.
@@ -22,7 +22,7 @@ func PopulateFromCookies(r *http.Request, dest interface{}) error {
 	for i := 0; i < val.NumField(); i++ {
 		field := val.Field(i)
 		fieldType := typ.Field(i)
-		tag := fieldType.Tag.Get(CookieField)
+		tag := fieldType.Tag.Get(CookieTag)
 
 		if tag == "" {
 			continue
