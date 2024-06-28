@@ -196,6 +196,23 @@ func TestPopulateFromCookies(t *testing.T) {
 	}
 }
 
+func TestPopulateFromCookies_NotFound(t *testing.T) {
+	r := httptest.NewRequest("GET", "/", nil)
+	type MyStruct struct {
+		StringField string `cookie:"myCookie"`
+	}
+
+	dest := &MyStruct{}
+	err := PopulateFromCookies(r, dest)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if dest.StringField != "" {
+		t.Errorf("Expected StringField to be empty, got %s", dest.StringField)
+	}
+}
+
 func TestPopulateFromCookies_UnsupportedType(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
 	r.AddCookie(&http.Cookie{
