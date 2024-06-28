@@ -4,7 +4,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/syntaqx/cookie)](https://goreportcard.com/report/github.com/syntaqx/cookie)
 [![codecov](https://codecov.io/gh/syntaqx/cookie/graph/badge.svg?token=2YEeUinfQe)](https://codecov.io/gh/syntaqx/cookie)
 
-![Social Preview](./img/repository-open-graph-template.png)
+![Social Preview](./.github/repository-open-graph-template.png)
 
 Cookies, but with structs, for happiness.
 
