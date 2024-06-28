@@ -67,6 +67,28 @@ func TestSet(t *testing.T) {
 		t.Errorf("Expected cookie SameSite %d, got %d", options.SameSite, cookie.SameSite)
 	}
 }
+
+func TestSet_WithoutOptions(t *testing.T) {
+	_, err := http.NewRequest(http.MethodGet, "/", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	w := httptest.NewRecorder()
+
+	name := "myCookie"
+	value := "myValue"
+
+	Set(w, name, value, nil)
+
+	// Get the response cookies
+	cookies := w.Result().Cookies()
+
+	// Check if the cookie was set correctly
+	if len(cookies) != 1 {
+		t.Errorf("Expected 1 cookie, got %d", len(cookies))
+	}
+}
+
 func TestGet(t *testing.T) {
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	cookieName := "myCookie"
