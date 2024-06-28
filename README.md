@@ -8,7 +8,7 @@ Cookies, but with structs, for happiness.
 
 ```go
 import (
-  "github.com/syntaqx/cookie"
+	"github.com/syntaqx/cookie"
 )
 
 ...
