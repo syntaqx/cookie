@@ -195,3 +195,21 @@ func TestPopulateFromCookies(t *testing.T) {
 		t.Errorf("Expected TimeField %v, got %v", expectedTime, dest.TimeField)
 	}
 }
+
+func TestPopulateFromCookies_UnsupportedType(t *testing.T) {
+	r := httptest.NewRequest("GET", "/", nil)
+	r.AddCookie(&http.Cookie{
+		Name:  "myCookie",
+		Value: "myValue",
+	})
+
+	type MyStruct struct {
+		Unsupported complex64 `cookie:"myCookie"`
+	}
+
+	dest := &MyStruct{}
+	err := PopulateFromCookies(r, dest)
+	if err == nil {
+		t.Error("Expected error, got nil")
+	}
+}
