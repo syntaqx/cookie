@@ -196,6 +196,114 @@ func TestPopulateFromCookies(t *testing.T) {
 	}
 }
 
+func TestPopulateFromCookies_InvalidIntValue(t *testing.T) {
+	r := httptest.NewRequest("GET", "/", nil)
+	r.AddCookie(&http.Cookie{
+		Name:  "myIntCookie",
+		Value: "invalid",
+	})
+
+	type MyStruct struct {
+		IntField int `cookie:"myIntCookie"`
+	}
+
+	dest := &MyStruct{}
+	err := PopulateFromCookies(r, dest)
+	if err == nil {
+		t.Error("Expected error, got nil")
+	}
+}
+
+func TestPopulateFromCookies_InvalidBoolValue(t *testing.T) {
+	r := httptest.NewRequest("GET", "/", nil)
+	r.AddCookie(&http.Cookie{
+		Name:  "myBoolCookie",
+		Value: "invalid",
+	})
+
+	type MyStruct struct {
+		BoolField bool `cookie:"myBoolCookie"`
+	}
+
+	dest := &MyStruct{}
+	err := PopulateFromCookies(r, dest)
+	if err == nil {
+		t.Error("Expected error, got nil")
+	}
+}
+
+func TestPopulateFromCookies_InvalidSliceValue(t *testing.T) {
+	r := httptest.NewRequest("GET", "/", nil)
+	r.AddCookie(&http.Cookie{
+		Name:  "mySliceCookie",
+		Value: "val1,val2,",
+	})
+
+	type MyStruct struct {
+		StringSlice []string `cookie:"mySliceCookie"`
+	}
+
+	dest := &MyStruct{}
+	err := PopulateFromCookies(r, dest)
+	if err == nil {
+		t.Error("Expected error, got nil")
+	}
+}
+
+func TestPopulateFromCookies_InvalidIntSliceValue(t *testing.T) {
+	r := httptest.NewRequest("GET", "/", nil)
+	r.AddCookie(&http.Cookie{
+		Name:  "myIntSliceCookie",
+		Value: "1,2,invalid",
+	})
+
+	type MyStruct struct {
+		IntSlice []int `cookie:"myIntSliceCookie"`
+	}
+
+	dest := &MyStruct{}
+	err := PopulateFromCookies(r, dest)
+	if err == nil {
+		t.Error("Expected error, got nil")
+	}
+}
+
+func TestPopulateFromCookies_InvalidUUIDValue(t *testing.T) {
+	r := httptest.NewRequest("GET", "/", nil)
+	r.AddCookie(&http.Cookie{
+		Name:  "myUUIDCookie",
+		Value: "invalid",
+	})
+
+	type MyStruct struct {
+		UUIDField uuid.UUID `cookie:"myUUIDCookie"`
+	}
+
+	dest := &MyStruct{}
+	err := PopulateFromCookies(r, dest)
+	if err == nil {
+		t.Error("Expected error, got nil")
+	}
+}
+
+func TestPopulateFromCookies_InvalidTimeValue(t *testing.T) {
+	r := httptest.NewRequest("GET", "/", nil)
+	r.AddCookie(&http.Cookie{
+		Name:  "myTimeCookie",
+		Value: "invalid",
+	})
+
+	type MyStruct struct {
+		TimeField time.Time `cookie:"myTimeCookie"`
+	}
+
+	dest := &MyStruct{}
+	err := PopulateFromCookies(r, dest)
+	if err == nil {
+		t.Error("Expected error, got nil")
+	}
+}
+
 func TestPopulateFromCookies_NotFound(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
 	type MyStruct struct {
