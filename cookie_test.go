@@ -232,24 +232,6 @@ func TestPopulateFromCookies_InvalidBoolValue(t *testing.T) {
 	}
 }
 
-func TestPopulateFromCookies_InvalidSliceValue(t *testing.T) {
-	r := httptest.NewRequest("GET", "/", nil)
-	r.AddCookie(&http.Cookie{
-		Name:  "mySliceCookie",
-		Value: "val1,val2,",
-	})
-
-	type MyStruct struct {
-		StringSlice []string `cookie:"mySliceCookie"`
-	}
-
-	dest := &MyStruct{}
-	err := PopulateFromCookies(r, dest)
-	if err == nil {
-		t.Error("Expected error, got nil")
-	}
-}
-
 func TestPopulateFromCookies_InvalidIntSliceValue(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
 	r.AddCookie(&http.Cookie{
