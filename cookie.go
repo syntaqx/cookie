@@ -3,9 +3,8 @@ package cookie
 import (
 	"net/http"
 	"reflect"
-	"time"
 
-	"github.com/gofrs/uuid"
+	"github.com/gofrs/uuid/v5"
 )
 
 // PopulateFromCookies populates the fields of a struct based on cookie tags.
@@ -30,13 +29,15 @@ func PopulateFromCookies(r *http.Request, dest interface{}) error {
 		switch field.Kind() {
 		case reflect.String:
 			field.SetString(cookie.Value)
-		case reflect.Struct:
+		case reflect.Array:
 			if fieldType.Type == reflect.TypeOf(uuid.UUID{}) {
 				uid, err := uuid.FromString(cookie.Value)
 				if err != nil {
 					return err
 				}
 				field.Set(reflect.ValueOf(uid))
+			} else {
+				return &UnsupportedTypeError{fieldType.Type}
 			}
 		default:
 			return &UnsupportedTypeError{fieldType.Type}
