@@ -24,22 +24,22 @@ func PopulateFromCookies(r *http.Request, dest interface{}) error {
 			continue
 		}
 
-		cookie, err := r.Cookie(tag)
+		cookie, err := Get(r, tag)
 		if err != nil {
 			return err
 		}
 
 		switch field.Kind() {
 		case reflect.String:
-			field.SetString(cookie.Value)
+			field.SetString(cookie)
 		case reflect.Int:
-			intVal, err := strconv.Atoi(cookie.Value)
+			intVal, err := strconv.Atoi(cookie)
 			if err != nil {
 				return err
 			}
 			field.SetInt(int64(intVal))
 		case reflect.Bool:
-			boolVal, err := strconv.ParseBool(cookie.Value)
+			boolVal, err := strconv.ParseBool(cookie)
 			if err != nil {
 				return err
 			}
@@ -47,9 +47,9 @@ func PopulateFromCookies(r *http.Request, dest interface{}) error {
 		case reflect.Slice:
 			switch fieldType.Type.Elem().Kind() {
 			case reflect.String:
-				field.Set(reflect.ValueOf(strings.Split(cookie.Value, ",")))
+				field.Set(reflect.ValueOf(strings.Split(cookie, ",")))
 			case reflect.Int:
-				intStrings := strings.Split(cookie.Value, ",")
+				intStrings := strings.Split(cookie, ",")
 				intSlice := make([]int, len(intStrings))
 				for i, s := range intStrings {
 					intVal, err := strconv.Atoi(s)
@@ -63,7 +63,7 @@ func PopulateFromCookies(r *http.Request, dest interface{}) error {
 		case reflect.Array:
 			// Handle uuid.UUID separately
 			if fieldType.Type == reflect.TypeOf(uuid.UUID{}) {
-				uid, err := uuid.FromString(cookie.Value)
+				uid, err := uuid.FromString(cookie)
 				if err != nil {
 					return err
 				}
@@ -71,7 +71,7 @@ func PopulateFromCookies(r *http.Request, dest interface{}) error {
 			}
 		case reflect.Struct:
 			if fieldType.Type == reflect.TypeOf(time.Time{}) {
-				timeVal, err := time.Parse(time.RFC3339, cookie.Value)
+				timeVal, err := time.Parse(time.RFC3339, cookie)
 				if err != nil {
 					return err
 				}
