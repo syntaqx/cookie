@@ -133,14 +133,6 @@ func PopulateFromCookies(r *http.Request, dest interface{}) error {
 					return err
 				}
 				field.Set(reflect.ValueOf(timeVal))
-			} else {
-				// For nested structs, recursively populate
-				nestedPtr := reflect.New(fieldType.Type).Interface()
-				err := PopulateFromCookies(r, nestedPtr)
-				if err != nil {
-					return err
-				}
-				field.Set(reflect.ValueOf(nestedPtr).Elem())
 			}
 		case reflect.Ptr:
 			if field.IsNil() {
