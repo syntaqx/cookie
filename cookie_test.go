@@ -13,7 +13,7 @@ import (
 )
 
 func TestSet(t *testing.T) {
-	_, err := http.NewRequest("GET", "/", nil)
+	_, err := http.NewRequest(http.MethodGet, "/", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,7 +68,7 @@ func TestSet(t *testing.T) {
 	}
 }
 func TestGet(t *testing.T) {
-	r := httptest.NewRequest("GET", "/", nil)
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	cookieName := "myCookie"
 	cookieValue := "myValue"
 	cookie := &http.Cookie{
@@ -88,7 +88,7 @@ func TestGet(t *testing.T) {
 }
 
 func TestGetNonexistentCookie(t *testing.T) {
-	r := httptest.NewRequest("GET", "/", nil)
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	cookieName := "nonexistentCookie"
 
 	_, err := Get(r, cookieName)
@@ -123,7 +123,7 @@ func TestRemove(t *testing.T) {
 }
 
 func TestPopulateFromCookies(t *testing.T) {
-	r := httptest.NewRequest("GET", "/", nil)
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	cookies := map[string]string{
 		"myCookie":         "myValue",
 		"myIntCookie":      "123",
@@ -197,7 +197,7 @@ func TestPopulateFromCookies(t *testing.T) {
 }
 
 func TestPopulateFromCookies_InvalidIntValue(t *testing.T) {
-	r := httptest.NewRequest("GET", "/", nil)
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	r.AddCookie(&http.Cookie{
 		Name:  "myIntCookie",
 		Value: "invalid",
@@ -215,7 +215,7 @@ func TestPopulateFromCookies_InvalidIntValue(t *testing.T) {
 }
 
 func TestPopulateFromCookies_InvalidBoolValue(t *testing.T) {
-	r := httptest.NewRequest("GET", "/", nil)
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	r.AddCookie(&http.Cookie{
 		Name:  "myBoolCookie",
 		Value: "invalid",
@@ -233,7 +233,7 @@ func TestPopulateFromCookies_InvalidBoolValue(t *testing.T) {
 }
 
 func TestPopulateFromCookies_InvalidIntSliceValue(t *testing.T) {
-	r := httptest.NewRequest("GET", "/", nil)
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	r.AddCookie(&http.Cookie{
 		Name:  "myIntSliceCookie",
 		Value: "1,2,invalid",
@@ -251,7 +251,7 @@ func TestPopulateFromCookies_InvalidIntSliceValue(t *testing.T) {
 }
 
 func TestPopulateFromCookies_InvalidUUIDValue(t *testing.T) {
-	r := httptest.NewRequest("GET", "/", nil)
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	r.AddCookie(&http.Cookie{
 		Name:  "myUUIDCookie",
 		Value: "invalid",
@@ -269,7 +269,7 @@ func TestPopulateFromCookies_InvalidUUIDValue(t *testing.T) {
 }
 
 func TestPopulateFromCookies_InvalidTimeValue(t *testing.T) {
-	r := httptest.NewRequest("GET", "/", nil)
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	r.AddCookie(&http.Cookie{
 		Name:  "myTimeCookie",
 		Value: "invalid",
@@ -287,7 +287,7 @@ func TestPopulateFromCookies_InvalidTimeValue(t *testing.T) {
 }
 
 func TestPopulateFromCookies_NotFound(t *testing.T) {
-	r := httptest.NewRequest("GET", "/", nil)
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	type MyStruct struct {
 		StringField string `cookie:"myCookie"`
 	}
@@ -304,7 +304,7 @@ func TestPopulateFromCookies_NotFound(t *testing.T) {
 }
 
 func TestPopulateFromCookies_UnsupportedType(t *testing.T) {
-	r := httptest.NewRequest("GET", "/", nil)
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	r.AddCookie(&http.Cookie{
 		Name:  "myCookie",
 		Value: "myValue",
