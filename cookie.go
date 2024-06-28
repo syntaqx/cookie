@@ -10,6 +10,10 @@ import (
 	"github.com/gofrs/uuid/v5"
 )
 
+const (
+	CookieField = "cookie"
+)
+
 // PopulateFromCookies populates the fields of a struct based on cookie tags.
 func PopulateFromCookies(r *http.Request, dest interface{}) error {
 	val := reflect.ValueOf(dest).Elem()
@@ -18,7 +22,7 @@ func PopulateFromCookies(r *http.Request, dest interface{}) error {
 	for i := 0; i < val.NumField(); i++ {
 		field := val.Field(i)
 		fieldType := typ.Field(i)
-		tag := fieldType.Tag.Get("cookie")
+		tag := fieldType.Tag.Get(CookieField)
 
 		if tag == "" {
 			continue
