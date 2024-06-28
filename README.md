@@ -12,14 +12,14 @@ Cookies, but with structs, for happiness.
 
 ```go
 import (
-	"github.com/syntaqx/cookie"
+  "github.com/syntaqx/cookie"
 )
 
 ...
 
 type User struct {
-	ID   uuid.UUID `cookie:"user_id"`
-	Name string    `cookie:"user_name"`
+  ID   uuid.UUID `cookie:"user_id"`
+  Name string    `cookie:"user_name"`
 }
 
 ...
@@ -27,8 +27,8 @@ type User struct {
 var user User
 err := cookie.PopulateFromCookies(r, &user)
 if err != nil {
-    http.Error(w, err.Error(), http.StatusInternalServerError)
-    return
+  http.Error(w, err.Error(), http.StatusInternalServerError)
+  return
 }
 
 fmt.Println(user.ID, user.Name)
@@ -43,8 +43,8 @@ For when you just want the value of the cookie:
 ```go
 userID, err := cookie.Get(r, "user_id")
 if err != nil {
-    http.Error(w, err.Error(), http.StatusInternalServerError)
-    return
+  http.Error(w, err.Error(), http.StatusInternalServerError)
+  return
 }
 ```
 
