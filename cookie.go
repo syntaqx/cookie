@@ -1,6 +1,7 @@
 package cookie
 
 import (
+	"errors"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -13,88 +14,6 @@ import (
 const (
 	CookieTag = "cookie"
 )
-
-// PopulateFromCookies populates the fields of a struct based on cookie tags.
-func PopulateFromCookies(r *http.Request, dest interface{}) error {
-	val := reflect.ValueOf(dest).Elem()
-	typ := val.Type()
-
-	for i := 0; i < val.NumField(); i++ {
-		field := val.Field(i)
-		fieldType := typ.Field(i)
-		tag := fieldType.Tag.Get(CookieTag)
-
-		if tag == "" {
-			continue
-		}
-
-		cookie, err := Get(r, tag)
-		if err != nil {
-			return err
-		}
-
-		switch field.Kind() {
-		case reflect.String:
-			field.SetString(cookie)
-		case reflect.Int:
-			intVal, err := strconv.Atoi(cookie)
-			if err != nil {
-				return err
-			}
-			field.SetInt(int64(intVal))
-		case reflect.Bool:
-			boolVal, err := strconv.ParseBool(cookie)
-			if err != nil {
-				return err
-			}
-			field.SetBool(boolVal)
-		case reflect.Slice:
-			switch fieldType.Type.Elem().Kind() {
-			case reflect.String:
-				field.Set(reflect.ValueOf(strings.Split(cookie, ",")))
-			case reflect.Int:
-				intStrings := strings.Split(cookie, ",")
-				intSlice := make([]int, len(intStrings))
-				for i, s := range intStrings {
-					intVal, err := strconv.Atoi(s)
-					if err != nil {
-						return err
-					}
-					intSlice[i] = intVal
-				}
-				field.Set(reflect.ValueOf(intSlice))
-			}
-		case reflect.Array:
-			// Handle uuid.UUID separately
-			if fieldType.Type == reflect.TypeOf(uuid.UUID{}) {
-				uid, err := uuid.FromString(cookie)
-				if err != nil {
-					return err
-				}
-				field.Set(reflect.ValueOf(uid))
-			}
-		case reflect.Struct:
-			if fieldType.Type == reflect.TypeOf(time.Time{}) {
-				timeVal, err := time.Parse(time.RFC3339, cookie)
-				if err != nil {
-					return err
-				}
-				field.Set(reflect.ValueOf(timeVal))
-			} else {
-				// For nested structs, recursively populate
-				nestedPtr := reflect.New(fieldType.Type).Interface()
-				err := PopulateFromCookies(r, nestedPtr)
-				if err != nil {
-					return err
-				}
-				field.Set(reflect.ValueOf(nestedPtr).Elem())
-			}
-		default:
-			return &UnsupportedTypeError{fieldType.Type}
-		}
-	}
-	return nil
-}
 
 // UnsupportedTypeError is returned when a field type is not supported by PopulateFromCookies.
 type UnsupportedTypeError struct {
@@ -142,4 +61,98 @@ func Remove(w http.ResponseWriter, name string) {
 		MaxAge: -1,
 	}
 	http.SetCookie(w, cookie)
+}
+
+// PopulateFromCookies populates the fields of a struct based on cookie tags.
+func PopulateFromCookies(r *http.Request, dest interface{}) error {
+	val := reflect.ValueOf(dest).Elem()
+	typ := val.Type()
+
+	for i := 0; i < val.NumField(); i++ {
+		field := val.Field(i)
+		fieldType := typ.Field(i)
+		tag := fieldType.Tag.Get(CookieTag)
+
+		if tag == "" {
+			continue
+		}
+
+		cookie, err := Get(r, tag)
+		if err != nil {
+			if errors.Is(err, http.ErrNoCookie) {
+				continue // Skip if the cookie is not found
+			}
+			return err
+		}
+
+		switch field.Kind() {
+		case reflect.String:
+			field.SetString(cookie)
+		case reflect.Int:
+			intVal, err := strconv.Atoi(cookie)
+			if err != nil {
+				return err
+			}
+			field.SetInt(int64(intVal))
+		case reflect.Bool:
+			boolVal, err := strconv.ParseBool(cookie)
+			if err != nil {
+				return err
+			}
+			field.SetBool(boolVal)
+		case reflect.Slice:
+			switch fieldType.Type.Elem().Kind() {
+			case reflect.String:
+				field.Set(reflect.ValueOf(strings.Split(cookie, ",")))
+			case reflect.Int:
+				intStrings := strings.Split(cookie, ",")
+				intSlice := make([]int, len(intStrings))
+				for i, s := range intStrings {
+					intVal, err := strconv.Atoi(s)
+					if err != nil {
+						return err
+					}
+					intSlice[i] = intVal
+				}
+				field.Set(reflect.ValueOf(intSlice))
+			default:
+				return &UnsupportedTypeError{fieldType.Type}
+			}
+		case reflect.Array:
+			if fieldType.Type == reflect.TypeOf(uuid.UUID{}) {
+				uid, err := uuid.FromString(cookie)
+				if err != nil {
+					return err
+				}
+				field.Set(reflect.ValueOf(uid))
+			}
+		case reflect.Struct:
+			if fieldType.Type == reflect.TypeOf(time.Time{}) {
+				timeVal, err := time.Parse(time.RFC3339, cookie)
+				if err != nil {
+					return err
+				}
+				field.Set(reflect.ValueOf(timeVal))
+			} else {
+				// For nested structs, recursively populate
+				nestedPtr := reflect.New(fieldType.Type).Interface()
+				err := PopulateFromCookies(r, nestedPtr)
+				if err != nil {
+					return err
+				}
+				field.Set(reflect.ValueOf(nestedPtr).Elem())
+			}
+		case reflect.Ptr:
+			if field.IsNil() {
+				field.Set(reflect.New(fieldType.Type.Elem()))
+			}
+			err := PopulateFromCookies(r, field.Interface())
+			if err != nil {
+				return err
+			}
+		default:
+			return &UnsupportedTypeError{fieldType.Type}
+		}
+	}
+	return nil
 }

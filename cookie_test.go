@@ -3,8 +3,13 @@ package cookie
 import (
 	"net/http"
 	"net/http/httptest"
+	"reflect"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
+
+	"github.com/gofrs/uuid/v5"
 )
 
 func TestSet(t *testing.T) {
@@ -20,7 +25,7 @@ func TestSet(t *testing.T) {
 	options := &http.Cookie{
 		Path:     "/",
 		Domain:   "example.com",
-		Expires:  time.Now().Add(24 * time.Hour).UTC(),
+		Expires:  time.Now().Add(24 * time.Hour),
 		MaxAge:   3600,
 		Secure:   true,
 		HttpOnly: true,
@@ -114,5 +119,79 @@ func TestRemove(t *testing.T) {
 	}
 	if cookie.MaxAge != -1 {
 		t.Errorf("Expected cookie max age -1, got %d", cookie.MaxAge)
+	}
+}
+
+func TestPopulateFromCookies(t *testing.T) {
+	r := httptest.NewRequest("GET", "/", nil)
+	cookies := map[string]string{
+		"myCookie":         "myValue",
+		"myIntCookie":      "123",
+		"myBoolCookie":     "true",
+		"mySliceCookie":    "val1,val2,val3",
+		"myIntSliceCookie": "1,2,3",
+		"myUUIDCookie":     uuid.Must(uuid.NewV4()).String(),
+		"myTimeCookie":     time.Now().Format(time.RFC3339),
+	}
+	for name, value := range cookies {
+		r.AddCookie(&http.Cookie{
+			Name:  name,
+			Value: value,
+		})
+	}
+
+	type MyStruct struct {
+		StringField string    `cookie:"myCookie"`
+		IntField    int       `cookie:"myIntCookie"`
+		BoolField   bool      `cookie:"myBoolCookie"`
+		StringSlice []string  `cookie:"mySliceCookie"`
+		IntSlice    []int     `cookie:"myIntSliceCookie"`
+		UUIDField   uuid.UUID `cookie:"myUUIDCookie"`
+		TimeField   time.Time `cookie:"myTimeCookie"`
+		Unsupported complex64 `cookie:""`
+	}
+
+	dest := &MyStruct{}
+	err := PopulateFromCookies(r, dest)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if dest.StringField != cookies["myCookie"] {
+		t.Errorf("Expected StringField %s, got %s", cookies["myCookie"], dest.StringField)
+	}
+
+	expectedInt, _ := strconv.Atoi(cookies["myIntCookie"])
+	if dest.IntField != expectedInt {
+		t.Errorf("Expected IntField %d, got %d", expectedInt, dest.IntField)
+	}
+
+	expectedBool, _ := strconv.ParseBool(cookies["myBoolCookie"])
+	if dest.BoolField != expectedBool {
+		t.Errorf("Expected BoolField %t, got %t", expectedBool, dest.BoolField)
+	}
+
+	expectedStringSlice := strings.Split(cookies["mySliceCookie"], ",")
+	if !reflect.DeepEqual(dest.StringSlice, expectedStringSlice) {
+		t.Errorf("Expected StringSlice %v, got %v", expectedStringSlice, dest.StringSlice)
+	}
+
+	intStrings := strings.Split(cookies["myIntSliceCookie"], ",")
+	expectedIntSlice := make([]int, len(intStrings))
+	for i, s := range intStrings {
+		expectedIntSlice[i], _ = strconv.Atoi(s)
+	}
+	if !reflect.DeepEqual(dest.IntSlice, expectedIntSlice) {
+		t.Errorf("Expected IntSlice %v, got %v", expectedIntSlice, dest.IntSlice)
+	}
+
+	expectedUUID, _ := uuid.FromString(cookies["myUUIDCookie"])
+	if dest.UUIDField != expectedUUID {
+		t.Errorf("Expected UUIDField %s, got %s", expectedUUID, dest.UUIDField)
+	}
+
+	expectedTime, _ := time.Parse(time.RFC3339, cookies["myTimeCookie"])
+	if !dest.TimeField.Equal(expectedTime) {
+		t.Errorf("Expected TimeField %v, got %v", expectedTime, dest.TimeField)
 	}
 }
