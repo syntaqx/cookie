@@ -1,6 +1,7 @@
 package cookie
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -21,6 +22,8 @@ func TestSet(t *testing.T) {
 
 	name := "myCookie"
 	value := "myValue"
+	signature := generateHMAC(value)
+	signedValue := fmt.Sprintf("%s|%s", value, signature)
 
 	options := &http.Cookie{
 		Path:     "/",
@@ -45,8 +48,8 @@ func TestSet(t *testing.T) {
 	if cookie.Name != name {
 		t.Errorf("Expected cookie name %s, got %s", name, cookie.Name)
 	}
-	if cookie.Value != value {
-		t.Errorf("Expected cookie value %s, got %s", value, cookie.Value)
+	if cookie.Value != signedValue {
+		t.Errorf("Expected cookie value %s, got %s", signedValue, cookie.Value)
 	}
 	if cookie.Path != options.Path {
 		t.Errorf("Expected cookie path %s, got %s", options.Path, cookie.Path)
