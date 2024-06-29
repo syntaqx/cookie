@@ -15,6 +15,9 @@ const (
 	CookieTag = "cookie"
 )
 
+// ErrNoCookie is returned when a cookie is not found.
+var ErrNoCookie = http.ErrNoCookie
+
 // UnsupportedTypeError is returned when a field type is not supported by PopulateFromCookies.
 type UnsupportedTypeError struct {
 	Type reflect.Type
@@ -80,7 +83,7 @@ func PopulateFromCookies(r *http.Request, dest interface{}) error {
 		cookie, err := Get(r, tag)
 		if err != nil {
 			if errors.Is(err, http.ErrNoCookie) {
-				continue // Skip if the cookie is not found
+				return ErrNoCookie
 			}
 			return err
 		}
