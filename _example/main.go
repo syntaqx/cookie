@@ -59,5 +59,6 @@ func setDemoCookies(w http.ResponseWriter) {
 
 func main() {
 	http.HandleFunc("/", handler)
+	fmt.Println("Listening on :8080")
 	http.ListenAndServe(":8080", nil)
 }
