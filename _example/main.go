@@ -18,11 +18,30 @@ type AccessTokenRequest struct {
 	ExpiresAt     time.Time `cookie:"Expires-At"`
 }
 
-// The first time you hit this handler it will give an error since the cookies
-// aren't set, just refresh it and you can see the struct populated from the
-// cookies.
-
 func handler(w http.ResponseWriter, r *http.Request) {
+
+	// If none of the cookies are set, we'll set them and refresh the page
+	// so the rest of the demo functions.
+	_, err := cookie.Get(r, "Application-ID")
+	if err != nil {
+		setDemoCookies(w)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	// Populate struct from cookies
+	var req AccessTokenRequest
+	err = cookie.PopulateFromCookies(r, &req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Dump the struct as a response
+	fmt.Fprintf(w, "AccessTokenRequest: %+v", req)
+}
+
+func setDemoCookies(w http.ResponseWriter) {
 	// Set cookies
 	cookie.Set(w, "Application-ID", uuid.Must(uuid.NewV7()).String(), &http.Cookie{
 		Path:     "/",
@@ -54,17 +73,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(24 * time.Hour),
 		HttpOnly: true,
 	})
-
-	// Populate struct from cookies
-	var req AccessTokenRequest
-	err := cookie.PopulateFromCookies(r, &req)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	// Dump the struct as a response
-	fmt.Fprintf(w, "AccessTokenRequest: %+v", req)
 }
 
 func main() {
