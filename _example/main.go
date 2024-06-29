@@ -42,37 +42,19 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func setDemoCookies(w http.ResponseWriter) {
+	options := &http.Cookie{
+		Path:     "/",
+		Expires:  time.Now().Add(24 * time.Hour),
+		HttpOnly: true,
+	}
+
 	// Set cookies
-	cookie.Set(w, "Application-ID", uuid.Must(uuid.NewV7()).String(), &http.Cookie{
-		Path:     "/",
-		Expires:  time.Now().Add(24 * time.Hour),
-		HttpOnly: true,
-	})
-	cookie.Set(w, "Access-Token", "some-access-token", &http.Cookie{
-		Path:     "/",
-		Expires:  time.Now().Add(24 * time.Hour),
-		HttpOnly: true,
-	})
-	cookie.Set(w, "User-ID", "123", &http.Cookie{
-		Path:     "/",
-		Expires:  time.Now().Add(24 * time.Hour),
-		HttpOnly: true,
-	})
-	cookie.Set(w, "Is-Admin", "true", &http.Cookie{
-		Path:     "/",
-		Expires:  time.Now().Add(24 * time.Hour),
-		HttpOnly: true,
-	})
-	cookie.Set(w, "Permissions", "read,write,execute", &http.Cookie{
-		Path:     "/",
-		Expires:  time.Now().Add(24 * time.Hour),
-		HttpOnly: true,
-	})
-	cookie.Set(w, "Expires-At", time.Now().Add(24*time.Hour).Format(time.RFC3339), &http.Cookie{
-		Path:     "/",
-		Expires:  time.Now().Add(24 * time.Hour),
-		HttpOnly: true,
-	})
+	cookie.Set(w, "Application-ID", uuid.Must(uuid.NewV7()).String(), options)
+	cookie.Set(w, "Access-Token", "some-access-token", options)
+	cookie.Set(w, "User-ID", "123", options)
+	cookie.Set(w, "Is-Admin", "true", options)
+	cookie.Set(w, "Permissions", "read,write,execute", options)
+	cookie.Set(w, "Expires-At", time.Now().Add(24*time.Hour).Format(time.RFC3339), options)
 }
 
 func main() {
