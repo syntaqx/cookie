@@ -90,6 +90,16 @@ If you want to set a signed cookie, you can use the `SetSigned` helper method:
 cookie.SetSigned(w, "user_id", "123")
 ```
 
+Alternatively, you can pass `Signed` to the options when setting a cookie:
+
+```go
+cookie.Set(w, "user_id", "123", &cookie.Options{
+  Signed: true,
+})
+```
+
+These are functionally identical.
+
 ### `GetSigned`
 
 If you want to get a signed cookie, you can use the `GetSigned` helper method:
