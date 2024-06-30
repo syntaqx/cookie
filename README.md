@@ -17,21 +17,19 @@ import (
 
 ...
 
-type User struct {
-  ID   uuid.UUID `cookie:"user_id,signed"`
-  Name string    `cookie:"user_name"`
+type MyCookies struct {
+  Debug bool    `cookie:"DEBUG"`
 }
-
 ...
 
-var user User
-err := cookie.PopulateFromCookies(r, &user)
+var cookies Cookies
+err := cookie.PopulateFromCookies(r, &cookies)
 if err != nil {
   http.Error(w, err.Error(), http.StatusInternalServerError)
   return
 }
 
-fmt.Println(user.ID, user.Name)
+fmt.Println(cookies.Debug)
 ```
 
 ## Helper Methods
@@ -41,7 +39,7 @@ fmt.Println(user.ID, user.Name)
 For when you just want the value of the cookie:
 
 ```go
-userID, err := cookie.Get(r, "user_id")
+debug, err := cookie.Get(r, "DEBUG")
 if err != nil {
   http.Error(w, err.Error(), http.StatusInternalServerError)
   return
@@ -63,14 +61,13 @@ options := &cookie.Options{
   SameSite: http.SameSiteStrictMode,
 }
 
-cookie.Set(w, "user_id", "123", options)
-cookie.Set(w, "user_name", "syntaqx", options)
+cookie.Set(w, "debug", "true", options)
 ```
 
 ### Remove
 
 ```go
-cookie.Remove(w, "user_id")
+cookie.Remove(w, "debug")
 ```
 
 ## Signed Cookies
