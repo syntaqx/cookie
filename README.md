@@ -62,6 +62,7 @@ options := &cookie.Options{
 }
 
 cookie.Set(w, "debug", "true", options)
+cookie.Set(w, "theme", "default", options)
 ```
 
 ### Remove
@@ -77,7 +78,7 @@ are signed, you can pass the `signed` tag to the struct field:
 
 ```go
 type User struct {
-  ID   uuid.UUID `cookie:"user_id,signed"`
+  ID uuid.UUID `cookie:"user_id,signed"`
 }
 ```
 

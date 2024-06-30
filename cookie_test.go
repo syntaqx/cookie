@@ -100,9 +100,7 @@ func TestSetSigned(t *testing.T) {
 	name := "myCookie"
 	value := "myValue"
 
-	options := &Options{}
-
-	SetSigned(w, name, value, options)
+	SetSigned(w, name, value, nil)
 
 	// Get the response cookies
 	cookies := w.Result().Cookies()
@@ -177,6 +175,54 @@ func TestGetSigned(t *testing.T) {
 	}
 }
 
+func TestGetSignedNonexistentCookie(t *testing.T) {
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	cookieName := "nonexistentCookie"
+
+	_, err := GetSigned(r, cookieName)
+	if err == nil {
+		t.Error("Expected error, got nil")
+	}
+}
+
+func TestGetSignedInvalidValue(t *testing.T) {
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	cookieName := "myCookie"
+	cookieValue := "myValue"
+	signedValue := base64.URLEncoding.EncodeToString([]byte(cookieValue)) + "|invalid"
+
+	cookie := &http.Cookie{
+		Name:  cookieName,
+		Value: signedValue,
+	}
+
+	r.AddCookie(cookie)
+
+	_, err := GetSigned(r, cookieName)
+	if err == nil {
+		t.Error("Expected error, got nil")
+	}
+}
+
+func TestGetSignedInvalidSignature(t *testing.T) {
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	cookieName := "myCookie"
+	cookieValue := "myValue"
+	signedValue := base64.URLEncoding.EncodeToString([]byte(cookieValue))
+
+	cookie := &http.Cookie{
+		Name:  cookieName,
+		Value: signedValue,
+	}
+
+	r.AddCookie(cookie)
+
+	_, err := GetSigned(r, cookieName)
+	if err == nil {
+		t.Error("Expected error, got nil")
+	}
+}
+
 func TestRemove(t *testing.T) {
 	w := httptest.NewRecorder()
 	name := "myCookie"
@@ -220,15 +266,21 @@ func TestPopulateFromCookies(t *testing.T) {
 		})
 	}
 
+	r.AddCookie(&http.Cookie{
+		Name:  "signedCookie",
+		Value: base64.URLEncoding.EncodeToString([]byte("signedValue")) + "|" + generateHMAC("signedValue"),
+	})
+
 	type MyStruct struct {
-		StringField string    `cookie:"myCookie"`
-		IntField    int       `cookie:"myIntCookie"`
-		BoolField   bool      `cookie:"myBoolCookie"`
-		StringSlice []string  `cookie:"mySliceCookie"`
-		IntSlice    []int     `cookie:"myIntSliceCookie"`
-		UUIDField   uuid.UUID `cookie:"myUUIDCookie"`
-		TimeField   time.Time `cookie:"myTimeCookie"`
-		Unsupported complex64 `cookie:""`
+		StringField  string    `cookie:"myCookie"`
+		IntField     int       `cookie:"myIntCookie"`
+		BoolField    bool      `cookie:"myBoolCookie"`
+		StringSlice  []string  `cookie:"mySliceCookie"`
+		IntSlice     []int     `cookie:"myIntSliceCookie"`
+		UUIDField    uuid.UUID `cookie:"myUUIDCookie"`
+		TimeField    time.Time `cookie:"myTimeCookie"`
+		SignedCookie string    `cookie:"signedCookie,signed"`
+		Unsupported  complex64 `cookie:""`
 	}
 
 	dest := &MyStruct{}
@@ -273,6 +325,11 @@ func TestPopulateFromCookies(t *testing.T) {
 	expectedTime, _ := time.Parse(time.RFC3339, cookies["myTimeCookie"])
 	if !dest.TimeField.Equal(expectedTime) {
 		t.Errorf("Expected TimeField %v, got %v", expectedTime, dest.TimeField)
+	}
+
+	expectedSignedValue := "signedValue"
+	if dest.SignedCookie != expectedSignedValue {
+		t.Errorf("Expected SignedCookie %s, got %s", expectedSignedValue, dest.SignedCookie)
 	}
 }
 
