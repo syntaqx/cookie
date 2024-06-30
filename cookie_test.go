@@ -185,6 +185,24 @@ func TestGetSignedNonexistentCookie(t *testing.T) {
 	}
 }
 
+func TestGetSignedInvalidFormat(t *testing.T) {
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	cookieName := "myCookie"
+	cookieValue := "myValue"
+
+	cookie := &http.Cookie{
+		Name:  cookieName,
+		Value: cookieValue,
+	}
+
+	r.AddCookie(cookie)
+
+	_, err := GetSigned(r, cookieName)
+	if err == nil {
+		t.Error("Expected error, got nil")
+	}
+}
+
 func TestGetSignedInvalidValue(t *testing.T) {
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	cookieName := "myCookie"
