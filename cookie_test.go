@@ -223,6 +223,26 @@ func TestGetSignedInvalidSignature(t *testing.T) {
 	}
 }
 
+func TestGetSignedInvalidHMAC(t *testing.T) {
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	cookieName := "myCookie"
+	cookieValue := "myValue"
+	signature := generateHMAC("invalid")
+	signedValue := base64.URLEncoding.EncodeToString([]byte(cookieValue)) + "|" + signature
+
+	cookie := &http.Cookie{
+		Name:  cookieName,
+		Value: signedValue,
+	}
+
+	r.AddCookie(cookie)
+
+	_, err := GetSigned(r, cookieName)
+	if err == nil {
+		t.Error("Expected error, got nil")
+	}
+}
+
 func TestRemove(t *testing.T) {
 	w := httptest.NewRecorder()
 	name := "myCookie"
