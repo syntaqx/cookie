@@ -425,6 +425,28 @@ func TestPopulateFromCookies_InvalidIntSliceValue(t *testing.T) {
 	}
 }
 
+func TestPopulateFromCookies_UnexpectedSliceType(t *testing.T) {
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	r.AddCookie(&http.Cookie{
+		Name:  "mySliceCookie",
+		Value: "val1,val2,val3",
+	})
+
+	type MyStruct struct {
+		StringSlice []bool `cookie:"mySliceCookie"`
+	}
+
+	dest := &MyStruct{}
+	err := PopulateFromCookies(r, dest)
+	if err == nil {
+		t.Error("Expected error, got nil")
+	}
+
+	if _, ok := err.(*UnsupportedTypeError); !ok {
+		t.Errorf("Expected error of type UnsupportedTypeError, got %T", err)
+	}
+}
+
 func TestPopulateFromCookies_InvalidUUIDValue(t *testing.T) {
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	r.AddCookie(&http.Cookie{
