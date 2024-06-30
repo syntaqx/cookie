@@ -25,7 +25,7 @@ var (
 	// UnsupportedTypeError is returned when a field type is not supported by PopulateFromCookies.
 	ErrUnsupportedType = errors.New("cookie: unsupported type")
 
-	// SigningKey is the key used to sign secure cookies.
+	// SigningKey is the key used to sign cookies.
 	SigningKey = []byte("default-signing-key")
 )
 

@@ -18,7 +18,7 @@ import (
 ...
 
 type User struct {
-  ID   uuid.UUID `cookie:"user_id,secure"`
+  ID   uuid.UUID `cookie:"user_id,signed"`
   Name string    `cookie:"user_name"`
 }
 
@@ -73,20 +73,20 @@ cookie.Set(w, "user_name", "syntaqx", options)
 cookie.Remove(w, "user_id")
 ```
 
-## Secure Cookies
+## Signed Cookies
 
-By default, cookies are not secure. If you want to make sure that your cookies
-are secure, you can pass the `secure1` tag to the struct field:
+By default, cookies are not signed. If you want to make sure that your cookies
+are signed, you can pass the `signed` tag to the struct field:
 
 ```go
 type User struct {
-  ID   uuid.UUID `cookie:"user_id,secure"`
+  ID   uuid.UUID `cookie:"user_id,signed"`
 }
 ```
 
 ### `SetSigned`
 
-If you want to set a cookie as secure, you can use the `SetSigned` helper method:
+If you want to set a signed cookie, you can use the `SetSigned` helper method:
 
 ```go
 cookie.SetSigned(w, "user_id", "123")
@@ -94,7 +94,7 @@ cookie.SetSigned(w, "user_id", "123")
 
 ### `GetSigned`
 
-If you want to get a secure cookie, you can use the `GetSigned` helper method:
+If you want to get a signed cookie, you can use the `GetSigned` helper method:
 
 ```go
 userID, err := cookie.GetSigned(r, "user_id")
