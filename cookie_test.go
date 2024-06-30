@@ -469,7 +469,7 @@ func TestPopulateFromCookies_NotFound(t *testing.T) {
 
 	dest := &MyStruct{}
 	err := PopulateFromCookies(r, dest)
-	if err != ErrNoCookie {
+	if err != http.ErrNoCookie {
 		t.Errorf("Expected error ErrNoCookie, got %v", err)
 	}
 }

@@ -25,9 +25,6 @@ var (
 )
 
 var (
-	// ErrNoCookie is returned when a cookie is not found.
-	ErrNoCookie = http.ErrNoCookie
-
 	// UnsupportedTypeError is returned when a field type is not supported by PopulateFromCookies.
 	ErrUnsupportedType = errors.New("cookie: unsupported type")
 
@@ -169,9 +166,6 @@ func PopulateFromCookies(r *http.Request, dest interface{}) error {
 		}
 
 		if err != nil {
-			if errors.Is(err, http.ErrNoCookie) {
-				return ErrNoCookie
-			}
 			return err
 		}
 
