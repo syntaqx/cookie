@@ -1,6 +1,9 @@
 package cookie
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
 	"errors"
 	"net/http"
 	"reflect"
@@ -12,11 +15,22 @@ import (
 )
 
 const (
-	CookieTag = "cookie"
+	CookieTag         = "cookie"
+	DefaultSigningKey = "default-signing-key"
 )
 
-// ErrNoCookie is returned when a cookie is not found.
-var ErrNoCookie = http.ErrNoCookie
+var (
+	// SigningKey is the key used to sign cookies.
+	SigningKey = []byte(DefaultSigningKey)
+)
+
+var (
+	// UnsupportedTypeError is returned when a field type is not supported by PopulateFromCookies.
+	ErrUnsupportedType = errors.New("cookie: unsupported type")
+
+	// ErrInvalidSignedCookieFormat is returned when a signed cookie is not in the correct format.
+	ErrInvalidSignedCookieFormat = errors.New("cookie: invalid signed cookie format")
+)
 
 // UnsupportedTypeError is returned when a field type is not supported by PopulateFromCookies.
 type UnsupportedTypeError struct {
@@ -27,10 +41,22 @@ func (e *UnsupportedTypeError) Error() string {
 	return "cookie: unsupported type: " + e.Type.String()
 }
 
+// Options contains the options for a cookie.
+type Options struct {
+	Path     string
+	Domain   string
+	Expires  time.Time
+	MaxAge   int
+	Secure   bool
+	HttpOnly bool
+	SameSite http.SameSite
+	Signed   bool
+}
+
 // Set sets a cookie with the given name, value, and options.
-func Set(w http.ResponseWriter, name, value string, options *http.Cookie) {
+func Set(w http.ResponseWriter, name, value string, options *Options) {
 	if options == nil {
-		options = &http.Cookie{}
+		options = &Options{}
 	}
 	cookie := &http.Cookie{
 		Name:     name,
@@ -43,6 +69,12 @@ func Set(w http.ResponseWriter, name, value string, options *http.Cookie) {
 		HttpOnly: options.HttpOnly,
 		SameSite: options.SameSite,
 	}
+
+	if options.Signed {
+		signature := generateHMAC(value)
+		cookie.Value = base64.URLEncoding.EncodeToString([]byte(value)) + "|" + signature
+	}
+
 	http.SetCookie(w, cookie)
 }
 
@@ -53,6 +85,49 @@ func Get(r *http.Request, name string) (string, error) {
 		return "", err
 	}
 	return cookie.Value, nil
+}
+
+// SetSigned sets a signed cookie with the given name, value, and options.
+func SetSigned(w http.ResponseWriter, name, value string, options *Options) {
+	if options == nil {
+		options = &Options{}
+	}
+
+	options.Signed = true
+	Set(w, name, value, options)
+}
+
+// GetSigned retrieves the value of a signed cookie with the given name.
+func GetSigned(r *http.Request, name string) (string, error) {
+	signedValue, err := Get(r, name)
+	if err != nil {
+		return "", err
+	}
+
+	parts := strings.SplitN(signedValue, "|", 2)
+	if len(parts) != 2 {
+		return "", ErrInvalidSignedCookieFormat
+	}
+
+	value, err := base64.URLEncoding.DecodeString(parts[0])
+	if err != nil {
+		return "", err
+	}
+
+	signature, err := base64.URLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return "", err
+	}
+
+	h := hmac.New(sha256.New, SigningKey)
+	h.Write(value)
+	expectedSignature := h.Sum(nil)
+
+	if !hmac.Equal(signature, expectedSignature) {
+		return "", errors.New("cookie: invalid cookie signature")
+	}
+
+	return string(value), nil
 }
 
 // Remove removes a cookie by setting its MaxAge to -1.
@@ -75,16 +150,22 @@ func PopulateFromCookies(r *http.Request, dest interface{}) error {
 		field := val.Field(i)
 		fieldType := typ.Field(i)
 		tag := fieldType.Tag.Get(CookieTag)
+		tagParts := strings.Split(tag, ",")
 
-		if tag == "" {
+		if tagParts[0] == "" {
 			continue
 		}
 
-		cookie, err := Get(r, tag)
+		var cookie string
+		var err error
+
+		if len(tagParts) > 1 && tagParts[1] == "signed" {
+			cookie, err = GetSigned(r, tagParts[0])
+		} else {
+			cookie, err = Get(r, tagParts[0])
+		}
+
 		if err != nil {
-			if errors.Is(err, http.ErrNoCookie) {
-				return ErrNoCookie
-			}
 			return err
 		}
 
@@ -142,4 +223,10 @@ func PopulateFromCookies(r *http.Request, dest interface{}) error {
 		}
 	}
 	return nil
+}
+
+func generateHMAC(value string) string {
+	h := hmac.New(sha256.New, SigningKey)
+	h.Write([]byte(value))
+	return base64.URLEncoding.EncodeToString(h.Sum(nil))
 }

@@ -17,21 +17,19 @@ import (
 
 ...
 
-type User struct {
-  ID   uuid.UUID `cookie:"user_id"`
-  Name string    `cookie:"user_name"`
+type MyCookies struct {
+  Debug bool `cookie:"DEBUG"`
 }
-
 ...
 
-var user User
-err := cookie.PopulateFromCookies(r, &user)
+var cookies Cookies
+err := cookie.PopulateFromCookies(r, &cookies)
 if err != nil {
   http.Error(w, err.Error(), http.StatusInternalServerError)
   return
 }
 
-fmt.Println(user.ID, user.Name)
+fmt.Println(cookies.Debug)
 ```
 
 ## Helper Methods
@@ -41,7 +39,7 @@ fmt.Println(user.ID, user.Name)
 For when you just want the value of the cookie:
 
 ```go
-userID, err := cookie.Get(r, "user_id")
+debug, err := cookie.Get(r, "DEBUG")
 if err != nil {
   http.Error(w, err.Error(), http.StatusInternalServerError)
   return
@@ -63,12 +61,63 @@ options := &cookie.Options{
   SameSite: http.SameSiteStrictMode,
 }
 
-cookie.Set(w, "user_id", "123", options)
-cookie.Set(w, "user_name", "syntaqx", options)
+cookie.Set(w, "debug", "true", options)
+cookie.Set(w, "theme", "default", options)
 ```
 
 ### Remove
 
 ```go
-cookie.Remove(w, "user_id")
+cookie.Remove(w, "debug")
+```
+
+## Signed Cookies
+
+By default, cookies are not signed. If you want to make sure that your cookies
+are signed, you can pass the `signed` tag to the struct field:
+
+```go
+type User struct {
+  ID uuid.UUID `cookie:"user_id,signed"`
+}
+```
+
+### `SetSigned`
+
+If you want to set a signed cookie, you can use the `SetSigned` helper method:
+
+```go
+cookie.SetSigned(w, "user_id", "123")
+```
+
+Alternatively, you can pass `Signed` to the options when setting a cookie:
+
+```go
+cookie.Set(w, "user_id", "123", &cookie.Options{
+  Signed: true,
+})
+```
+
+These are functionally identical.
+
+### `GetSigned`
+
+If you want to get a signed cookie, you can use the `GetSigned` helper method:
+
+```go
+userID, err := cookie.GetSigned(r, "user_id")
+if err != nil {
+  http.Error(w, err.Error(), http.StatusInternalServerError)
+  return
+}
+```
+
+### Signing Key
+
+By default, the signing key is set to `[]byte(cookie.DefaultSigningKey)`. You
+should change this signing key for your application by assigning the
+`cookie.SigningKey` variable to a secret value of your own:
+
+```go
+cookie.SigningKey = []byte("my-secret-key")
 ```

@@ -11,15 +11,16 @@ import (
 
 type AccessTokenRequest struct {
 	ApplicationID uuid.UUID `cookie:"Application-ID"`
-	AccessToken   string    `cookie:"Access-Token"`
-	UserID        int       `cookie:"User-ID"`
-	IsAdmin       bool      `cookie:"Is-Admin"`
-	Permissions   []string  `cookie:"Permissions"`
-	ExpiresAt     time.Time `cookie:"Expires-At"`
+	AccessToken   string    `cookie:"Access-Token,signed"`
+	UserID        int       `cookie:"User-ID,signed"`
+	IsAdmin       bool      `cookie:"Is-Admin,signed"`
+	Permissions   []string  `cookie:"Permissions,signed"`
+	ExpiresAt     time.Time `cookie:"Expires-At,signed"`
+	Theme         string    `cookie:"THEME"`
+	Debug         bool      `cookie:"DEBUG"`
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-
 	// If none of the cookies are set, we'll set them and refresh the page
 	// so the rest of the demo functions.
 	_, err := cookie.Get(r, "Application-ID")
@@ -42,7 +43,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func setDemoCookies(w http.ResponseWriter) {
-	options := &http.Cookie{
+	options := &cookie.Options{
 		Path:     "/",
 		Expires:  time.Now().Add(24 * time.Hour),
 		HttpOnly: true,
@@ -50,11 +51,15 @@ func setDemoCookies(w http.ResponseWriter) {
 
 	// Set cookies
 	cookie.Set(w, "Application-ID", uuid.Must(uuid.NewV7()).String(), options)
-	cookie.Set(w, "Access-Token", "some-access-token", options)
-	cookie.Set(w, "User-ID", "123", options)
-	cookie.Set(w, "Is-Admin", "true", options)
-	cookie.Set(w, "Permissions", "read,write,execute", options)
-	cookie.Set(w, "Expires-At", time.Now().Add(24*time.Hour).Format(time.RFC3339), options)
+	cookie.Set(w, "THEME", "default", options)
+	cookie.Set(w, "DEBUG", "true", options)
+
+	// Set signed cookies
+	cookie.SetSigned(w, "Access-Token", "some-access-token", options)
+	cookie.SetSigned(w, "User-ID", "123", options)
+	cookie.SetSigned(w, "Is-Admin", "true", options)
+	cookie.SetSigned(w, "Permissions", "read,write,execute", options)
+	cookie.SetSigned(w, "Expires-At", time.Now().Add(24*time.Hour).Format(time.RFC3339), options)
 }
 
 func main() {
