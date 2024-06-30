@@ -19,14 +19,19 @@ const (
 )
 
 var (
+	// SigningKey is the key used to sign cookies.
+	SigningKey = []byte("default-signing-key")
+)
+
+var (
 	// ErrNoCookie is returned when a cookie is not found.
 	ErrNoCookie = http.ErrNoCookie
 
 	// UnsupportedTypeError is returned when a field type is not supported by PopulateFromCookies.
 	ErrUnsupportedType = errors.New("cookie: unsupported type")
 
-	// SigningKey is the key used to sign cookies.
-	SigningKey = []byte("default-signing-key")
+	// ErrInvalidSignedCookieFormat is returned when a signed cookie is not in the correct format.
+	ErrInvalidSignedCookieFormat = errors.New("cookie: invalid signed cookie format")
 )
 
 // UnsupportedTypeError is returned when a field type is not supported by PopulateFromCookies.
@@ -104,7 +109,7 @@ func GetSigned(r *http.Request, name string) (string, error) {
 
 	parts := strings.SplitN(signedValue, "|", 2)
 	if len(parts) != 2 {
-		return "", errors.New("cookie: invalid signed cookie format")
+		return "", ErrInvalidSignedCookieFormat
 	}
 
 	value, err := base64.URLEncoding.DecodeString(parts[0])
