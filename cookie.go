@@ -15,12 +15,13 @@ import (
 )
 
 const (
-	CookieTag = "cookie"
+	CookieTag         = "cookie"
+	DefaultSigningKey = "default-signing-key"
 )
 
 var (
 	// SigningKey is the key used to sign cookies.
-	SigningKey = []byte("default-signing-key")
+	SigningKey = []byte(DefaultSigningKey)
 )
 
 var (

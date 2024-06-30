@@ -106,8 +106,9 @@ if err != nil {
 
 ### Signing Key
 
-By default, the signing key is set to `cookie.DefaultSigningKey`. If you want to
-change the signing key, you can set it using the `cookie.SigningKey` variable:
+By default, the signing key is set to `[]byte(cookie.DefaultSigningKey)`. You
+should change this signing key for your application by assigning the
+`cookie.SigningKey` variable to a secret value of your own:
 
 ```go
 cookie.SigningKey = []byte("my-secret-key")
