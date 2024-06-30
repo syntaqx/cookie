@@ -22,7 +22,7 @@ func TestSet(t *testing.T) {
 	name := "myCookie"
 	value := "myValue"
 
-	options := &http.Cookie{
+	options := &Options{
 		Path:     "/",
 		Domain:   "example.com",
 		Expires:  time.Now().Add(24 * time.Hour),
