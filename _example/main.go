@@ -21,7 +21,6 @@ type AccessTokenRequest struct {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-
 	// If none of the cookies are set, we'll set them and refresh the page
 	// so the rest of the demo functions.
 	_, err := cookie.Get(r, "Application-ID")
@@ -52,13 +51,15 @@ func setDemoCookies(w http.ResponseWriter) {
 
 	// Set cookies
 	cookie.Set(w, "Application-ID", uuid.Must(uuid.NewV7()).String(), options)
+	cookie.Set(w, "THEME", "default", options)
+	cookie.Set(w, "DEBUG", "true", options)
+
+	// Set signed cookies
 	cookie.SetSigned(w, "Access-Token", "some-access-token", options)
 	cookie.SetSigned(w, "User-ID", "123", options)
 	cookie.SetSigned(w, "Is-Admin", "true", options)
 	cookie.SetSigned(w, "Permissions", "read,write,execute", options)
 	cookie.SetSigned(w, "Expires-At", time.Now().Add(24*time.Hour).Format(time.RFC3339), options)
-	cookie.Set(w, "THEME", "default", options)
-	cookie.Set(w, "DEBUG", "true", options)
 }
 
 func main() {

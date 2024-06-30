@@ -74,11 +74,10 @@ func Set(w http.ResponseWriter, name, value string, options *Options) {
 	}
 
 	if options.Signed {
-		h := hmac.New(sha256.New, SigningKey)
-		h.Write([]byte(value))
-		signature := base64.URLEncoding.EncodeToString(h.Sum(nil))
+		signature := generateHMAC(value)
 		cookie.Value = base64.URLEncoding.EncodeToString([]byte(value)) + "|" + signature
 	}
+
 	http.SetCookie(w, cookie)
 }
 
@@ -230,4 +229,10 @@ func PopulateFromCookies(r *http.Request, dest interface{}) error {
 		}
 	}
 	return nil
+}
+
+func generateHMAC(value string) string {
+	h := hmac.New(sha256.New, SigningKey)
+	h.Write([]byte(value))
+	return base64.URLEncoding.EncodeToString(h.Sum(nil))
 }

@@ -1,6 +1,7 @@
 package cookie
 
 import (
+	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -89,6 +90,39 @@ func TestSet_WithoutOptions(t *testing.T) {
 	}
 }
 
+func TestSetSigned(t *testing.T) {
+	_, err := http.NewRequest(http.MethodGet, "/", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	w := httptest.NewRecorder()
+
+	name := "myCookie"
+	value := "myValue"
+
+	options := &Options{}
+
+	SetSigned(w, name, value, options)
+
+	// Get the response cookies
+	cookies := w.Result().Cookies()
+
+	// Check if the cookie was set correctly
+	if len(cookies) != 1 {
+		t.Errorf("Expected 1 cookie, got %d", len(cookies))
+	}
+	cookie := cookies[0]
+	if cookie.Name != name {
+		t.Errorf("Expected cookie name %s, got %s", name, cookie.Name)
+	}
+
+	// Check if the cookie value is signed
+	parts := strings.Split(cookie.Value, "|")
+	if len(parts) != 2 {
+		t.Errorf("Expected signed cookie value, got %s", cookie.Value)
+	}
+}
+
 func TestGet(t *testing.T) {
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	cookieName := "myCookie"
@@ -116,6 +150,30 @@ func TestGetNonexistentCookie(t *testing.T) {
 	_, err := Get(r, cookieName)
 	if err == nil {
 		t.Error("Expected error, got nil")
+	}
+}
+
+func TestGetSigned(t *testing.T) {
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	cookieName := "myCookie"
+	cookieValue := "myValue"
+	signature := generateHMAC(cookieValue)
+	signedValue := base64.URLEncoding.EncodeToString([]byte(cookieValue)) + "|" + signature
+
+	cookie := &http.Cookie{
+		Name:  cookieName,
+		Value: signedValue,
+	}
+
+	r.AddCookie(cookie)
+
+	value, err := GetSigned(r, cookieName)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if value != cookieValue {
+		t.Errorf("Expected cookie value %s, got %s", cookieValue, value)
 	}
 }
 

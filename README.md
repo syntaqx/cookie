@@ -18,7 +18,7 @@ import (
 ...
 
 type MyCookies struct {
-  Debug bool    `cookie:"DEBUG"`
+  Debug bool `cookie:"DEBUG"`
 }
 ...
 
