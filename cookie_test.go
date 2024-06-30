@@ -208,7 +208,7 @@ func TestGetSignedInvalidSignature(t *testing.T) {
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	cookieName := "myCookie"
 	cookieValue := "myValue"
-	signedValue := base64.URLEncoding.EncodeToString([]byte(cookieValue))
+	signedValue := base64.URLEncoding.EncodeToString([]byte(cookieValue)) + "|invalid"
 
 	cookie := &http.Cookie{
 		Name:  cookieName,
