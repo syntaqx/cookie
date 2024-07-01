@@ -85,14 +85,7 @@ It is still recommended that sensitive data not be stored in cookies, and that
 HTTPS be used to prevent cookie
 [replay attacks](https://en.wikipedia.org/wiki/Replay_attack).
 
-If you want to sign your cookies, you can use the `signed` tag to the struct
-field:
-
-```go
-type User struct {
-  ID uuid.UUID `cookie:"user_id,signed"`
-}
-```
+If you want to sign your cookies, this can be accomplished by:
 
 ### `SetSigned`
 
@@ -121,6 +114,16 @@ userID, err := cookie.GetSigned(r, "user_id")
 if err != nil {
   http.Error(w, err.Error(), http.StatusInternalServerError)
   return
+}
+```
+
+### Reading Signed Cookies
+
+To read signed cookies into your struct, you can use the `signed` tag:
+
+```go
+type User struct {
+  ID uuid.UUID `cookie:"user_id,signed"`
 }
 ```
 
