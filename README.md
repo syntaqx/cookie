@@ -162,8 +162,8 @@ cookie.Set(w, "debug", "true", &cookie.Options{
 })
 ```
 
-When defaulting to signed cookies, you can still use the `unsigned` tag in the
-struct field to populate unsigned cookies:
+When defaulting to signed cookies, unsigned cookies can still be populated by
+using the `unsigned` tag in the struct field:
 
 ```go
 type MyCookies struct {
