@@ -178,6 +178,16 @@ cookie.Set(w, "debug", "true", &cookie.Options{
 })
 ```
 
+This will require the use of the `GetSigned` method to retrieve cookie values.
+
+```go
+debug, err := cookie.GetSigned(r, "debug")
+if err != nil {
+  http.Error(w, err.Error(), http.StatusInternalServerError)
+  return
+}
+```
+
 When defaulting to signed cookies, unsigned cookies can still be populated by
 using the `unsigned` tag in the struct field:
 
@@ -187,7 +197,7 @@ type MyCookies struct {
 }
 ```
 
-Or retrieve unsigned cookies using the `Get` method:
+Or retrieved using the `Get` method, which always retrieves the plaintext value:
 
 ```go
 debug, err := cookie.Get(r, "debug")

@@ -185,7 +185,7 @@ func TestGetSignedNonexistentCookie(t *testing.T) {
 	}
 }
 
-func TestGetSignedInvalidFormat(t *testing.T) {
+func TestGetSignedInvalidSignedFormat(t *testing.T) {
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	cookieName := "myCookie"
 	cookieValue := "myValue"
@@ -200,6 +200,10 @@ func TestGetSignedInvalidFormat(t *testing.T) {
 	_, err := GetSigned(r, cookieName)
 	if err == nil {
 		t.Error("Expected error, got nil")
+	}
+
+	if err != ErrInvalidSignedFormat {
+		t.Errorf("Expected error ErrInvalidSignedFormat, got %v", err)
 	}
 }
 
@@ -222,7 +226,7 @@ func TestGetSignedInvalidValue(t *testing.T) {
 	}
 }
 
-func TestGetSignedInvalidSignature(t *testing.T) {
+func TestGetSignedInvalidBase64(t *testing.T) {
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	cookieName := "myCookie"
 	cookieValue := "myValue"
@@ -241,7 +245,7 @@ func TestGetSignedInvalidSignature(t *testing.T) {
 	}
 }
 
-func TestGetSignedInvalidHMAC(t *testing.T) {
+func TestGetSignedInvalidSignature(t *testing.T) {
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	cookieName := "myCookie"
 	cookieValue := "myValue"
@@ -258,6 +262,10 @@ func TestGetSignedInvalidHMAC(t *testing.T) {
 	_, err := GetSigned(r, cookieName)
 	if err == nil {
 		t.Error("Expected error, got nil")
+	}
+
+	if err != ErrInvalidSignature {
+		t.Errorf("Expected error ErrInvalidSignature, got %v", err)
 	}
 }
 
