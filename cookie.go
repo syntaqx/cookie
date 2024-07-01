@@ -89,7 +89,7 @@ func Set(w http.ResponseWriter, name, value string, options *Options) {
 	http.SetCookie(w, cookie)
 }
 
-// Get retrieves the value of a cookie with the given name.
+// Get retrieves the plaintext value of a cookie with the given name.
 func Get(r *http.Request, name string) (string, error) {
 	cookie, err := r.Cookie(name)
 	if err != nil {
