@@ -1,5 +1,6 @@
 # cookie
 
+[![Go](https://github.com/syntaqx/cookie/actions/workflows/go.yml/badge.svg)](https://github.com/syntaqx/cookie/actions/workflows/go.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/syntaqx/cookie.svg)](https://pkg.go.dev/github.com/syntaqx/cookie)
 [![Go Report Card](https://goreportcard.com/badge/github.com/syntaqx/cookie)](https://goreportcard.com/report/github.com/syntaqx/cookie)
 [![codecov](https://codecov.io/gh/syntaqx/cookie/graph/badge.svg?token=2YEeUinfQe)](https://codecov.io/gh/syntaqx/cookie)
