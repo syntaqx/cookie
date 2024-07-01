@@ -168,8 +168,17 @@ func PopulateFromCookies(r *http.Request, dest interface{}) error {
 
 		var cookie string
 		var err error
+		isSigned := DefaultOptions.Signed
 
-		if len(tagParts) > 1 && tagParts[1] == "signed" {
+		for _, part := range tagParts[1:] {
+			if part == "signed" {
+				isSigned = true
+			} else if part == "unsigned" {
+				isSigned = false
+			}
+		}
+
+		if isSigned {
 			cookie, err = GetSigned(r, tagParts[0])
 		} else {
 			cookie, err = Get(r, tagParts[0])
