@@ -152,20 +152,9 @@ cookie.DefaultOptions = &cookie.Options{
 }
 ```
 
-Which will sign all cookies by default, even when using the `Set` and `Get`
-methods.
-
-If you have any unsigned cookies, you can still access their values by using the
-`unsigned` tag in the struct field:
-
-```go
-type MyCookies struct {
-  Debug bool `cookie:"user_id,unsigned"`
-}
-```
-
-However you will need to explicitly override this value when setting the cookie,
-as the default will be to sign the cookie:
+Which will now sign all cookies by default when using the `Set` method. You can
+still override this by passing `Signed: false` to the options when setting a
+cookie.
 
 ```go
 cookie.Set(w, "debug", "true", &cookie.Options{
@@ -173,4 +162,13 @@ cookie.Set(w, "debug", "true", &cookie.Options{
 })
 ```
 
-Due to the option now defaulting to `true`.
+But will need to explicitly `GetSigned` when retrieving the value.
+
+When defaulting to signed cookies, you can still use the `unsigned` tag in the
+struct field to populate unsigned cookies:
+
+```go
+type MyCookies struct {
+  Debug bool `cookie:"debug,unsigned"`
+}
+```
