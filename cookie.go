@@ -19,6 +19,18 @@ const (
 	DefaultSigningKey = "default-signing-key"
 )
 
+// Options contains the options for a cookie.
+type Options struct {
+	Path     string
+	Domain   string
+	Expires  time.Time
+	MaxAge   int
+	Secure   bool
+	HttpOnly bool
+	SameSite http.SameSite
+	Signed   bool
+}
+
 var (
 	// SigningKey is the key used to sign cookies.
 	SigningKey = []byte(DefaultSigningKey)
@@ -37,32 +49,18 @@ var (
 )
 
 var (
-	// ErrUnsupportedType is returned when a field type is not supported by PopulateFromCookies.
-	ErrUnsupportedType = errors.New("cookie: unsupported type")
-
 	// ErrInvalidSignedCookieFormat is returned when a signed cookie is not in the correct format.
 	ErrInvalidSignedCookieFormat = errors.New("cookie: invalid signed cookie format")
 )
 
-// UnsupportedTypeError is returned when a field type is not supported by PopulateFromCookies.
-type UnsupportedTypeError struct {
+// ErrUnsupportedType is returned when a field type is not supported.
+type ErrUnsupportedType struct {
 	Type reflect.Type
 }
 
-func (e *UnsupportedTypeError) Error() string {
+// Error returns the error message.
+func (e *ErrUnsupportedType) Error() string {
 	return "cookie: unsupported type: " + e.Type.String()
-}
-
-// Options contains the options for a cookie.
-type Options struct {
-	Path     string
-	Domain   string
-	Expires  time.Time
-	MaxAge   int
-	Secure   bool
-	HttpOnly bool
-	SameSite http.SameSite
-	Signed   bool
 }
 
 // Set sets a cookie with the given name, value, and options.
@@ -219,7 +217,7 @@ func PopulateFromCookies(r *http.Request, dest interface{}) error {
 				}
 				field.Set(reflect.ValueOf(intSlice))
 			default:
-				return &UnsupportedTypeError{fieldType.Type}
+				return &ErrUnsupportedType{fieldType.Type}
 			}
 		case reflect.Array:
 			if fieldType.Type == reflect.TypeOf(uuid.UUID{}) {
@@ -238,7 +236,7 @@ func PopulateFromCookies(r *http.Request, dest interface{}) error {
 				field.Set(reflect.ValueOf(timeVal))
 			}
 		default:
-			return &UnsupportedTypeError{fieldType.Type}
+			return &ErrUnsupportedType{fieldType.Type}
 		}
 	}
 	return nil

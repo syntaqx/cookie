@@ -449,8 +449,8 @@ func TestPopulateFromCookies_UnexpectedSliceType(t *testing.T) {
 		t.Error("Expected error, got nil")
 	}
 
-	if _, ok := err.(*UnsupportedTypeError); !ok {
-		t.Errorf("Expected error of type UnsupportedTypeError, got %T", err)
+	if _, ok := err.(*ErrUnsupportedType); !ok {
+		t.Errorf("Expected error of type ErrUnsupportedType, got %T", err)
 	}
 }
 
@@ -520,8 +520,8 @@ func TestPopulateFromCookies_UnsupportedType(t *testing.T) {
 		t.Error("Expected error, got nil")
 	}
 
-	if _, ok := err.(*UnsupportedTypeError); !ok {
-		t.Errorf("Expected error of type UnsupportedTypeError, got %T", err)
+	if _, ok := err.(*ErrUnsupportedType); !ok {
+		t.Errorf("Expected error of type ErrUnsupportedType, got %T", err)
 	}
 
 	expected := "cookie: unsupported type: complex64"
