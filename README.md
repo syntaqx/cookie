@@ -152,7 +152,8 @@ cookie.DefaultOptions = &cookie.Options{
 }
 ```
 
-Which makes all cookies signed by default.
+Which will sign all cookies by default, even when using the `Set` and `Get`
+methods.
 
 If you have any unsigned cookies, you can still access their values by using the
 `unsigned` tag in the struct field:
@@ -172,4 +173,4 @@ cookie.Set(w, "debug", "true", &cookie.Options{
 })
 ```
 
-Due to the default value now overriding the option.
+Due to the option now defaulting to `true`.
