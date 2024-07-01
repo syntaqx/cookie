@@ -158,7 +158,7 @@ If you have any unsigned cookies, you can still access their values by using the
 `unsigned` tag in the struct field:
 
 ```go
-type User struct {
+type MyCookies struct {
   Debug bool `cookie:"user_id,unsigned"`
 }
 ```
