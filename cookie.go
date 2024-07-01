@@ -49,8 +49,11 @@ var (
 )
 
 var (
-	// ErrInvalidSignedCookieFormat is returned when a signed cookie is not in the correct format.
-	ErrInvalidSignedCookieFormat = errors.New("cookie: invalid signed cookie format")
+	// ErrInvalidSignedFormat is returned when a signed cookie is not in the correct format.
+	ErrInvalidSignedFormat = errors.New("cookie: invalid signed cookie format")
+
+	// ErrInvalidSignature is returned when a signed cookie has an invalid signature.
+	ErrInvalidSignature = errors.New("cookie: invalid cookie signature")
 )
 
 // ErrUnsupportedType is returned when a field type is not supported.
@@ -114,7 +117,7 @@ func GetSigned(r *http.Request, name string) (string, error) {
 
 	parts := strings.SplitN(signedValue, "|", 2)
 	if len(parts) != 2 {
-		return "", ErrInvalidSignedCookieFormat
+		return "", ErrInvalidSignedFormat
 	}
 
 	value, err := base64.URLEncoding.DecodeString(parts[0])
@@ -132,7 +135,7 @@ func GetSigned(r *http.Request, name string) (string, error) {
 	expectedSignature := h.Sum(nil)
 
 	if !hmac.Equal(signature, expectedSignature) {
-		return "", errors.New("cookie: invalid cookie signature")
+		return "", ErrInvalidSignature
 	}
 
 	return string(value), nil
