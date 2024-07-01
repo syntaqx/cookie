@@ -73,8 +73,20 @@ cookie.Remove(w, "debug")
 
 ## Signed Cookies
 
-By default, cookies are not signed. If you want to make sure that your cookies
-are signed, you can pass the `signed` tag to the struct field:
+By default, cookies are stored in plaintext.
+
+Cookies can be signed to ensure their value has not been tampered with. This
+works by creating a [HMAC](https://en.wikipedia.org/wiki/HMAC) of the value
+(current cookie), and base64 encoding it. When the cookie gets read, it
+recalculates the signature and makes sure that it matches the signature attached
+to it.
+
+It is still recommended that sensitive data not be stored in cookies, and that
+HTTPS be used to prevent cookie
+[replay attacks](https://en.wikipedia.org/wiki/Replay_attack).
+
+If you want to sign your cookies, you can use the `signed` tag to the struct
+field:
 
 ```go
 type User struct {
