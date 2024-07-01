@@ -121,3 +121,55 @@ should change this signing key for your application by assigning the
 ```go
 cookie.SigningKey = []byte("my-secret-key")
 ```
+
+## Default Options
+
+You can set default options for all cookies by assigning the
+`cookie.DefaultOptions` variable:
+
+```go
+cookie.DefaultOptions = &cookie.Options{
+  Domain: "example.com",
+  Expires: time.Now().Add(24 * time.Hour),
+  MaxAge: 86400,
+  Secure: true,
+  HttpOnly: true,
+  SameSite: http.SameSiteStrictMode,
+}
+```
+
+These options will be used as the defaults for cookies that do not strictly
+override them, allowing you to only set the values you care about.
+
+### Signed by Default
+
+If you want all cookies to be signed by default, you can set the `Signed` field
+in the `cookie.DefaultOptions`:
+
+```go
+cookie.DefaultOptions = &cookie.Options{
+  Signed: true,
+}
+```
+
+Which makes all cookies signed by default.
+
+If you have any unsigned cookies, you can still access their values by using the
+`unsigned` tag in the struct field:
+
+```go
+type User struct {
+  Debug bool `cookie:"user_id,unsigned"`
+}
+```
+
+However you will need to explicitly override this value when setting the cookie,
+as the default will be to sign the cookie:
+
+```go
+cookie.Set(w, "debug", "true", &cookie.Options{
+  Signed: false,
+})
+```
+
+Due to the default value now overriding the option.
