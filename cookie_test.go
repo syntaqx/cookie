@@ -185,7 +185,7 @@ func TestGetSignedNonexistentCookie(t *testing.T) {
 	}
 }
 
-func TestGetSignedInvalidFormat(t *testing.T) {
+func TestGetSignedInvalidSignedFormat(t *testing.T) {
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	cookieName := "myCookie"
 	cookieValue := "myValue"
