@@ -11,13 +11,13 @@ import (
 
 type RequestCookies struct {
 	ApplicationID uuid.UUID `cookie:"Application-ID"`
+	Theme         string    `cookie:"THEME"`
+	Debug         bool      `cookie:"DEBUG"`
 	AccessToken   string    `cookie:"Access-Token,signed"`
 	UserID        int       `cookie:"User-ID,signed"`
 	IsAdmin       bool      `cookie:"Is-Admin,signed"`
 	Permissions   []string  `cookie:"Permissions,signed"`
 	ExpiresAt     time.Time `cookie:"Expires-At,signed"`
-	Theme         string    `cookie:"THEME"`
-	Debug         bool      `cookie:"DEBUG"`
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
