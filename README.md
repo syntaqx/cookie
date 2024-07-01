@@ -171,7 +171,7 @@ type MyCookies struct {
 }
 ```
 
-Or retrieve them using the `Get` method:
+Or retrieve unsigned cookies using the `Get` method:
 
 ```go
 debug, err := cookie.Get(r, "debug")
