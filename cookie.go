@@ -22,10 +22,22 @@ const (
 var (
 	// SigningKey is the key used to sign cookies.
 	SigningKey = []byte(DefaultSigningKey)
+
+	// DefaultOptions are the default options for cookies.
+	DefaultOptions = &Options{
+		Path:     "/",
+		Domain:   "",
+		Expires:  time.Time{},
+		MaxAge:   0,
+		Secure:   false,
+		HttpOnly: false,
+		SameSite: http.SameSiteDefaultMode,
+		Signed:   false,
+	}
 )
 
 var (
-	// UnsupportedTypeError is returned when a field type is not supported by PopulateFromCookies.
+	// ErrUnsupportedType is returned when a field type is not supported by PopulateFromCookies.
 	ErrUnsupportedType = errors.New("cookie: unsupported type")
 
 	// ErrInvalidSignedCookieFormat is returned when a signed cookie is not in the correct format.
@@ -55,22 +67,20 @@ type Options struct {
 
 // Set sets a cookie with the given name, value, and options.
 func Set(w http.ResponseWriter, name, value string, options *Options) {
-	if options == nil {
-		options = &Options{}
-	}
+	mergedOptions := mergeOptions(options, DefaultOptions)
 	cookie := &http.Cookie{
 		Name:     name,
 		Value:    value,
-		Path:     options.Path,
-		Domain:   options.Domain,
-		Expires:  options.Expires,
-		MaxAge:   options.MaxAge,
-		Secure:   options.Secure,
-		HttpOnly: options.HttpOnly,
-		SameSite: options.SameSite,
+		Path:     mergedOptions.Path,
+		Domain:   mergedOptions.Domain,
+		Expires:  mergedOptions.Expires,
+		MaxAge:   mergedOptions.MaxAge,
+		Secure:   mergedOptions.Secure,
+		HttpOnly: mergedOptions.HttpOnly,
+		SameSite: mergedOptions.SameSite,
 	}
 
-	if options.Signed {
+	if mergedOptions.Signed {
 		signature := generateHMAC(value)
 		cookie.Value = base64.URLEncoding.EncodeToString([]byte(value)) + "|" + signature
 	}
@@ -158,8 +168,17 @@ func PopulateFromCookies(r *http.Request, dest interface{}) error {
 
 		var cookie string
 		var err error
+		isSigned := DefaultOptions.Signed
 
-		if len(tagParts) > 1 && tagParts[1] == "signed" {
+		for _, part := range tagParts[1:] {
+			if part == "signed" {
+				isSigned = true
+			} else if part == "unsigned" {
+				isSigned = false
+			}
+		}
+
+		if isSigned {
 			cookie, err = GetSigned(r, tagParts[0])
 		} else {
 			cookie, err = Get(r, tagParts[0])
@@ -229,4 +248,39 @@ func generateHMAC(value string) string {
 	h := hmac.New(sha256.New, SigningKey)
 	h.Write([]byte(value))
 	return base64.URLEncoding.EncodeToString(h.Sum(nil))
+}
+
+func mergeOptions(provided, defaults *Options) *Options {
+	if provided == nil {
+		return defaults
+	}
+
+	merged := *defaults
+
+	if provided.Path != "" {
+		merged.Path = provided.Path
+	}
+	if provided.Domain != "" {
+		merged.Domain = provided.Domain
+	}
+	if !provided.Expires.IsZero() {
+		merged.Expires = provided.Expires
+	}
+	if provided.MaxAge != 0 {
+		merged.MaxAge = provided.MaxAge
+	}
+	if provided.Secure {
+		merged.Secure = provided.Secure
+	}
+	if provided.HttpOnly {
+		merged.HttpOnly = provided.HttpOnly
+	}
+	if provided.SameSite != http.SameSiteDefaultMode {
+		merged.SameSite = provided.SameSite
+	}
+	if provided.Signed {
+		merged.Signed = provided.Signed
+	}
+
+	return &merged
 }

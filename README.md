@@ -20,6 +20,7 @@ import (
 type MyCookies struct {
   Debug bool `cookie:"DEBUG"`
 }
+
 ...
 
 var cookies Cookies
@@ -135,4 +136,63 @@ should change this signing key for your application by assigning the
 
 ```go
 cookie.SigningKey = []byte("my-secret-key")
+```
+
+## Default Options
+
+You can set default options for all cookies by assigning the
+`cookie.DefaultOptions` variable:
+
+```go
+cookie.DefaultOptions = &cookie.Options{
+  Domain: "example.com",
+  Expires: time.Now().Add(24 * time.Hour),
+  MaxAge: 86400,
+  Secure: true,
+  HttpOnly: true,
+  SameSite: http.SameSiteStrictMode,
+}
+```
+
+These options will be used as the defaults for cookies that do not strictly
+override them, allowing you to only set the values you care about.
+
+### Signed by Default
+
+If you want all cookies to be signed by default, you can set the `Signed` field
+in the `cookie.DefaultOptions`:
+
+```go
+cookie.DefaultOptions = &cookie.Options{
+  Signed: true,
+}
+```
+
+Which will now sign all cookies by default when using the `Set` method. You can
+still override this by passing `Signed: false` to the options when setting a
+cookie.
+
+```go
+cookie.Set(w, "debug", "true", &cookie.Options{
+  Signed: false,
+})
+```
+
+When defaulting to signed cookies, unsigned cookies can still be populated by
+using the `unsigned` tag in the struct field:
+
+```go
+type MyCookies struct {
+  Debug bool `cookie:"debug,unsigned"`
+}
+```
+
+Or retrieve unsigned cookies using the `Get` method:
+
+```go
+debug, err := cookie.Get(r, "debug")
+if err != nil {
+  http.Error(w, err.Error(), http.StatusInternalServerError)
+  return
+}
 ```

@@ -296,6 +296,7 @@ func TestPopulateFromCookies(t *testing.T) {
 		"myIntSliceCookie": "1,2,3",
 		"myUUIDCookie":     uuid.Must(uuid.NewV4()).String(),
 		"myTimeCookie":     time.Now().Format(time.RFC3339),
+		"unsignedCookie":   "unsignedValue",
 	}
 	for name, value := range cookies {
 		r.AddCookie(&http.Cookie{
@@ -310,15 +311,16 @@ func TestPopulateFromCookies(t *testing.T) {
 	})
 
 	type MyStruct struct {
-		StringField  string    `cookie:"myCookie"`
-		IntField     int       `cookie:"myIntCookie"`
-		BoolField    bool      `cookie:"myBoolCookie"`
-		StringSlice  []string  `cookie:"mySliceCookie"`
-		IntSlice     []int     `cookie:"myIntSliceCookie"`
-		UUIDField    uuid.UUID `cookie:"myUUIDCookie"`
-		TimeField    time.Time `cookie:"myTimeCookie"`
-		SignedCookie string    `cookie:"signedCookie,signed"`
-		Unsupported  complex64 `cookie:""`
+		StringField    string    `cookie:"myCookie"`
+		IntField       int       `cookie:"myIntCookie"`
+		BoolField      bool      `cookie:"myBoolCookie"`
+		StringSlice    []string  `cookie:"mySliceCookie"`
+		IntSlice       []int     `cookie:"myIntSliceCookie"`
+		UUIDField      uuid.UUID `cookie:"myUUIDCookie"`
+		TimeField      time.Time `cookie:"myTimeCookie"`
+		UnsignedCookie string    `cookie:"unsignedCookie,unsigned"`
+		SignedCookie   string    `cookie:"signedCookie,signed"`
+		Unsupported    complex64 `cookie:""`
 	}
 
 	dest := &MyStruct{}
@@ -363,6 +365,11 @@ func TestPopulateFromCookies(t *testing.T) {
 	expectedTime, _ := time.Parse(time.RFC3339, cookies["myTimeCookie"])
 	if !dest.TimeField.Equal(expectedTime) {
 		t.Errorf("Expected TimeField %v, got %v", expectedTime, dest.TimeField)
+	}
+
+	expectedUnsignedValue := "unsignedValue"
+	if dest.UnsignedCookie != expectedUnsignedValue {
+		t.Errorf("Expected UnsignedCookie %s, got %s", expectedUnsignedValue, dest.UnsignedCookie)
 	}
 
 	expectedSignedValue := "signedValue"

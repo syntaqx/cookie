@@ -9,7 +9,7 @@ import (
 	"github.com/syntaqx/cookie"
 )
 
-type AccessTokenRequest struct {
+type RequestCookies struct {
 	ApplicationID uuid.UUID `cookie:"Application-ID"`
 	AccessToken   string    `cookie:"Access-Token,signed"`
 	UserID        int       `cookie:"User-ID,signed"`
@@ -31,7 +31,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Populate struct from cookies
-	var req AccessTokenRequest
+	var req RequestCookies
 	err = cookie.PopulateFromCookies(r, &req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -39,7 +39,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Dump the struct as a response
-	fmt.Fprintf(w, "AccessTokenRequest: %+v", req)
+	fmt.Fprintf(w, "RequestCookies: %+v", req)
 }
 
 func setDemoCookies(w http.ResponseWriter) {
