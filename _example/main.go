@@ -39,6 +39,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		Permissions []string  `cookie:"Permissions,signed"`
 		Friends     []int     `cookie:"Friends,unsigned"`
 		ExpiresAt   time.Time `cookie:"Expires-At,signed"`
+		NotExists   string    `cookie:"Does-Not-Exist,omitempty"`
 	}
 
 	var c RequestCookies

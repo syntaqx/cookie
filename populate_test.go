@@ -42,6 +42,7 @@ func TestManager_PopulateFromCookies(t *testing.T) {
 		StringSlice   []string  `cookie:"cookie7"`
 		IntSlice      []int     `cookie:"cookie8"`
 		Timestamp     time.Time `cookie:"cookie9"`
+		NotSet        string    `cookie:"cookie10,omitempty"`
 	}
 
 	dest := &MyStruct{}
@@ -61,6 +62,7 @@ func TestManager_PopulateFromCookies(t *testing.T) {
 		StringSlice: []string{"a", "b", "c"},
 		IntSlice:    []int{1, 2, 3},
 		Timestamp:   time.Date(2021, 1, 2, 15, 4, 5, 0, time.UTC),
+		NotSet:      "",
 	}
 	if !reflect.DeepEqual(dest, expected) {
 		t.Errorf("Unexpected result. Got: %v, want: %v", dest, expected)

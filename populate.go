@@ -28,12 +28,15 @@ func (m *Manager) PopulateFromCookies(r *http.Request, dest interface{}) error {
 		name := parts[0]
 		signed := false
 		unsigned := false
+		omitempty := false
 
 		for _, part := range parts[1:] {
 			if part == "signed" {
 				signed = true
 			} else if part == "unsigned" {
 				unsigned = true
+			} else if part == "omitempty" {
+				omitempty = true
 			}
 		}
 
@@ -45,6 +48,9 @@ func (m *Manager) PopulateFromCookies(r *http.Request, dest interface{}) error {
 			value, err = m.Get(r, name)
 		}
 		if err != nil {
+			if err == http.ErrNoCookie && omitempty {
+				continue
+			}
 			return err
 		}
 

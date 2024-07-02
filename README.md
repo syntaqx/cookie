@@ -125,11 +125,17 @@ type RequestCookies struct {
   Theme       string    `cookie:"THEME"`
   Debug       bool      `cookie:"DEBUG,unsigned"`
   AccessToken string    `cookie:"Access-Token,signed"`
+  NotRequired string    `cookie:"NOT_REQUIRED,omitempty"`
 }
 
 var c RequestCookies
 err := manager.PopulateFromCookies(r, &c)
 ```
+
+> [!TIP]
+> By default, the `PopulateFromCookies` method will return an error if a
+> required cookie is missing. You can use the `omitempty` tag to make a field
+> optional.
 
 ### Supporting Custom Types
 
