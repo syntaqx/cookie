@@ -11,14 +11,17 @@ Cookies, but with structs, for happiness.
 
 ## Overview
 
-`cookie` is a Go package designed to make handling HTTP cookies simple and robust by using structs. It supports standard data types, custom data types, and signed cookies to ensure data integrity.
+`cookie` is a Go package designed to make handling HTTP cookies simple and
+robust, and simplifying the process of parsing them into your structs. It
+supports standard data types, custom data types, and signed cookies to ensure
+data integrity.
 
 ## Features
 
-- **Struct-based cookie values**: Easily get cookies into your structs.
-- **Signed cookies**: Ensure the integrity of your cookies with HMAC signatures.
-- **Custom type support**: Extend cookie parsing with your own data types.
 - **Easy to use**: Simple API for managing cookies in your web applications.
+- **Struct-based cookie values**: Easily get cookies into your structs.
+- **Custom type support**: Extend cookie parsing with your own data types.
+- **Signed cookies**: Ensure the integrity of your cookies with HMAC signatures.
 
 ## Installation
 
