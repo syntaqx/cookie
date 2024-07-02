@@ -8,9 +8,6 @@ import (
 	"time"
 )
 
-// CustomTypeHandler defines a function type for custom type handling.
-type CustomTypeHandler func(string) (interface{}, error)
-
 // Options represent the options for an HTTP cookie as sent in the Set-Cookie
 // header of an HTTP response or the Cookie header of an HTTP request.
 type Options struct {
