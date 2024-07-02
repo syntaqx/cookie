@@ -124,7 +124,7 @@ func (m *Manager) setFieldValue(fieldVal reflect.Value, value string) error {
 			fieldVal.Set(reflect.ValueOf(timeVal))
 		}
 	default:
-		return ErrUnsupportedFieldType
+		return &ErrUnsupportedType{Type: fieldVal.Type()}
 	}
 	return nil
 }
