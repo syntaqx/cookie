@@ -15,7 +15,7 @@ Cookies, but with structs, for happiness.
 
 ## Features
 
-- **Struct-based cookie management**: Easily set and get cookies using Go structs.
+- **Struct-based cookie values**: Easily get cookies into your structs.
 - **Signed cookies**: Ensure the integrity of your cookies with HMAC signatures.
 - **Custom type support**: Extend cookie handling with your own data types.
 - **Easy to use**: Simple API for managing cookies in your web applications.
