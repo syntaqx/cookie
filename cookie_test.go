@@ -26,6 +26,18 @@ func TestManager_Get(t *testing.T) {
 	}
 }
 
+func TestManager_GetError(t *testing.T) {
+	m := NewManager()
+	r, _ := http.NewRequest(http.MethodGet, "/", nil)
+
+	cookieName := "myCookie"
+
+	_, err := m.Get(r, cookieName)
+	if err == nil {
+		t.Error("Expected error, but got nil")
+	}
+}
+
 func TestManager_GetSigned(t *testing.T) {
 	m := NewManager(
 		WithSigningKey([]byte("super-secret-key")),
@@ -48,6 +60,20 @@ func TestManager_GetSigned(t *testing.T) {
 
 	if value != expectedValue {
 		t.Errorf("Expected value '%s', but got '%s'", expectedValue, value)
+	}
+}
+
+func TestManager_GetSignedError(t *testing.T) {
+	m := NewManager(
+		WithSigningKey([]byte("super-secret-key")),
+	)
+	r, _ := http.NewRequest(http.MethodGet, "/", nil)
+
+	cookieName := "myCookie"
+
+	_, err := m.GetSigned(r, cookieName)
+	if err == nil {
+		t.Error("Expected error, but got nil")
 	}
 }
 
@@ -145,5 +171,36 @@ func TestManager_Remove(t *testing.T) {
 
 	if cookie.MaxAge != -1 {
 		t.Errorf("Expected cookie to be expired, but it has MaxAge %d", cookie.MaxAge)
+	}
+}
+
+func TestManager_RemoveWithOptions(t *testing.T) {
+	m := NewManager()
+	w := httptest.NewRecorder()
+
+	cookieName := "myCookie"
+	path := "/path"
+
+	err := m.Remove(w, cookieName, Options{
+		Path: path,
+	})
+
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	cookies := w.Result().Cookies()
+
+	if len(cookies) != 1 {
+		t.Errorf("Expected 1 cookie, but got %d", len(cookies))
+	}
+
+	cookie := cookies[0]
+	if cookie.Name != cookieName {
+		t.Errorf("Expected cookie name '%s', but got '%s'", cookieName, cookie.Name)
+	}
+
+	if cookie.Path != path {
+		t.Errorf("Expected cookie path '%s', but got '%s'", path, cookie.Path)
 	}
 }
