@@ -121,6 +121,16 @@ func (m *Manager) Set(w http.ResponseWriter, name, value string, opts ...Options
 	return nil
 }
 
+// SetSigned sets the value of a signed cookie.
+func (m *Manager) SetSigned(w http.ResponseWriter, name, value string, opts ...Options) error {
+	var o Options
+	if len(opts) > 0 {
+		o = opts[0]
+	}
+	o.Signed = true
+	return m.Set(w, name, value, o)
+}
+
 // Remove deletes a cookie.
 func (m *Manager) Remove(w http.ResponseWriter, name string, opts ...Options) error {
 	var o Options

@@ -197,7 +197,7 @@ func TestManager_Set(t *testing.T) {
 	}
 }
 
-func TestManager_SetSigned(t *testing.T) {
+func TestManager_Set_Signed(t *testing.T) {
 	m := NewManager(
 		WithSigningKey([]byte("super-secret-key")),
 	)
@@ -207,6 +207,40 @@ func TestManager_SetSigned(t *testing.T) {
 	expectedValue := "myValue"
 
 	err := m.Set(w, cookieName, expectedValue, Options{Signed: true})
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	cookies := w.Result().Cookies()
+
+	if len(cookies) != 1 {
+		t.Errorf("Expected 1 cookie, but got %d", len(cookies))
+	}
+
+	cookie := cookies[0]
+	if cookie.Name != cookieName {
+		t.Errorf("Expected cookie name '%s', but got '%s'", cookieName, cookie.Name)
+	}
+
+	data := base64.URLEncoding.EncodeToString([]byte(expectedValue))
+	signature := base64.URLEncoding.EncodeToString(sign([]byte(data), m.signingKey))
+	expectedCookieValue := data + "|" + signature
+
+	if cookie.Value != expectedCookieValue {
+		t.Errorf("Expected cookie value '%s', but got '%s'", expectedCookieValue, cookie.Value)
+	}
+}
+
+func TestManager_SetSigned(t *testing.T) {
+	m := NewManager(
+		WithSigningKey([]byte("super-secret-key")),
+	)
+	w := httptest.NewRecorder()
+
+	cookieName := "myCookie"
+	expectedValue := "myValue"
+
+	err := m.SetSigned(w, cookieName, expectedValue, Options{})
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}

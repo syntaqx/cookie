@@ -28,7 +28,47 @@ go get github.com/syntaqx/cookie
 
 ## Usage
 
-First, create a `Manager` to handle your cookies:
+By default, you can simply plug and play the `cookie` package into your existing
+applications by using the `DefaultManager`:
+
+You can retrieve values manually:
+
+```go
+func main() {
+  cookie.Get(r, "DEBUG")
+  cookie.GetSigned(r, "Access-Token")
+  cookie.Set(w, "DEBUG", "true", cookie.Options{})
+  cookie.Set(w, "Access-Token", "token_value", cookie.Options{Signed: true})
+  cookie.SetSigned(w, "Access-Token", "token_value")
+}
+```
+
+Or Populate a struct:
+
+```go
+type RequestCookies struct {
+  Theme       string    `cookie:"THEME"`
+  Debug       bool      `cookie:"DEBUG,unsigned"`
+  AccessToken string    `cookie:"Access-Token,signed"`
+}
+
+var c RequestCookies
+cookie.PopulateFromCookies(r, &c)
+```
+
+In order to sign cookies, you must provide a signing key:
+
+```go
+signingKey := []byte("super-secret-key")
+cookie.DefaultManager = cookie.NewManager(
+  cookie.WithSigningKey(signingKey),
+)
+```
+
+## Manager
+
+For more advanced usage, you can create a `Manager` to handle your cookies,
+rather than relying on the `DefaultManager`:
 
 ```go
 manager := cookie.NewManager()

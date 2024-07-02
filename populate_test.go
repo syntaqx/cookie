@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func TestPopulateFromCookies(t *testing.T) {
+func TestManager_PopulateFromCookies(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 
 	manager := NewManager(WithSigningKey([]byte("super-secret-key")))
