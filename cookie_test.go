@@ -77,6 +77,98 @@ func TestManager_GetSignedError(t *testing.T) {
 	}
 }
 
+func TestManager_GetSignedInvalidFormat(t *testing.T) {
+	m := NewManager(
+		WithSigningKey([]byte("super-secret-key")),
+	)
+	r, _ := http.NewRequest(http.MethodGet, "/", nil)
+
+	cookieName := "myCookie"
+	cookieValue := "invalidFormat"
+
+	r.AddCookie(&http.Cookie{Name: cookieName, Value: cookieValue})
+
+	_, err := m.GetSigned(r, cookieName)
+	if err == nil {
+		t.Error("Expected error, but got nil")
+	}
+
+	if err != ErrInvalidSignedCookieFormat {
+		t.Errorf("Expected error '%v', but got '%v'", ErrInvalidSignedCookieFormat, err)
+	}
+}
+
+func TestManager_GetSignedInvalidSignature(t *testing.T) {
+	m := NewManager(
+		WithSigningKey([]byte("super-secret-key")),
+	)
+	r, _ := http.NewRequest(http.MethodGet, "/", nil)
+
+	cookieName := "myCookie"
+	expectedValue := "myValue"
+
+	data := base64.URLEncoding.EncodeToString([]byte(expectedValue))
+	signature := base64.URLEncoding.EncodeToString(sign([]byte("invalidData"), m.signingKey))
+	cookieValue := data + "|" + signature
+
+	r.AddCookie(&http.Cookie{Name: cookieName, Value: cookieValue})
+
+	_, err := m.GetSigned(r, cookieName)
+	if err == nil {
+		t.Error("Expected error, but got nil")
+	}
+
+	if err != ErrInvalidCookieSignature {
+		t.Errorf("Expected error '%v', but got '%v'", ErrInvalidCookieSignature, err)
+	}
+}
+
+func TestManager_GetSigned_Base64DataDecodeError(t *testing.T) {
+	m := NewManager(
+		WithSigningKey([]byte("super-secret-key")),
+	)
+
+	r, _ := http.NewRequest(http.MethodGet, "/", nil)
+
+	cookieName := "myCookie"
+	cookieValue := "invalidBase64|invalidBase64"
+
+	r.AddCookie(&http.Cookie{Name: cookieName, Value: cookieValue})
+
+	_, err := m.GetSigned(r, cookieName)
+	if err == nil {
+		t.Error("Expected error, but got nil")
+	}
+
+	expectedError := "illegal base64 data at input byte 12"
+	if err.Error() != expectedError {
+		t.Errorf("Expected error '%s', but got '%v'", expectedError, err)
+	}
+}
+
+func TestManager_GetSigned_Base64SignatureDecodeError(t *testing.T) {
+	m := NewManager(
+		WithSigningKey([]byte("super-secret-key")),
+	)
+
+	r, _ := http.NewRequest(http.MethodGet, "/", nil)
+
+	cookieName := "myCookie"
+	cookieValue := "ZXhhbXBsZQ==|invalidBase64"
+
+	r.AddCookie(&http.Cookie{Name: cookieName, Value: cookieValue})
+
+	_, err := m.GetSigned(r, cookieName)
+	if err == nil {
+		t.Error("Expected error, but got nil")
+	}
+
+	expectedError := "illegal base64 data at input byte 12"
+	if err.Error() != expectedError {
+		t.Errorf("Expected error '%s', but got '%v'", expectedError, err)
+	}
+}
+
 func TestManager_Set(t *testing.T) {
 	m := NewManager()
 	w := httptest.NewRecorder()
