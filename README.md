@@ -22,6 +22,7 @@ data integrity.
 - **Struct-based cookie values**: Easily get cookies into your structs.
 - **Custom type support**: Extend cookie parsing with your own data types.
 - **Signed cookies**: Ensure the integrity of your cookies with HMAC signatures.
+- **No external dependencies**: Just pure standard library goodness.
 
 ## Installation
 
