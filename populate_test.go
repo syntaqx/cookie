@@ -91,3 +91,212 @@ func TestPopulateFromCookies_NonNilPointerRequired(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 }
+
+func TestPopulateFromCookies_ErrNoCookie(t *testing.T) {
+	// Create a mock HTTP request with cookies
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+
+	// Create an instance of the Manager
+	manager := NewManager()
+
+	// Create a struct to populate with cookie values
+	type MyStruct struct {
+		Field string `cookie:"cookie"`
+	}
+
+	// Call the PopulateFromCookies function
+	dest := &MyStruct{}
+	err := manager.PopulateFromCookies(req, dest)
+	if err != http.ErrNoCookie {
+		t.Errorf("Unexpected error: %v", err)
+	}
+}
+
+func TestPopulateFromCookies_ErrUnsupportedType(t *testing.T) {
+	// Create a mock HTTP request with cookies
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+
+	req.AddCookie(&http.Cookie{Name: "cookie", Value: "test"})
+
+	// Create an instance of the Manager
+	manager := NewManager()
+
+	// Create a struct to populate with cookie values
+	type MyStruct struct {
+		Field complex128 `cookie:"cookie"`
+	}
+
+	// Call the PopulateFromCookies function
+	dest := &MyStruct{}
+	err := manager.PopulateFromCookies(req, dest)
+	if err == nil {
+		t.Error("Expected error, but got nil")
+	}
+
+	expectedError := "cookie: unsupported type: complex128"
+	if err.Error() != expectedError {
+		t.Errorf("Expected error '%s', but got '%v'", expectedError, err)
+	}
+}
+
+func TestPopulateFromCookies_InvalidBoolean(t *testing.T) {
+	// Create a mock HTTP request with cookies
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+
+	req.AddCookie(&http.Cookie{Name: "cookie", Value: "invalid"})
+
+	// Create an instance of the Manager
+	manager := NewManager()
+
+	// Create a struct to populate with cookie values
+	type MyStruct struct {
+		Field bool `cookie:"cookie"`
+	}
+
+	// Call the PopulateFromCookies function
+	dest := &MyStruct{}
+	err := manager.PopulateFromCookies(req, dest)
+	if err == nil {
+		t.Error("Expected error, but got nil")
+	}
+
+	expectedError := "strconv.ParseBool: parsing \"invalid\": invalid syntax"
+	if err.Error() != expectedError {
+		t.Errorf("Expected error '%s', but got '%v'", expectedError, err)
+	}
+}
+
+func TestPopulateFromCookies_InvalidInteger(t *testing.T) {
+	// Create a mock HTTP request with cookies
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+
+	req.AddCookie(&http.Cookie{Name: "cookie", Value: "invalid"})
+
+	// Create an instance of the Manager
+	manager := NewManager()
+
+	// Create a struct to populate with cookie values
+	type MyStruct struct {
+		Field int `cookie:"cookie"`
+	}
+
+	// Call the PopulateFromCookies function
+	dest := &MyStruct{}
+	err := manager.PopulateFromCookies(req, dest)
+	if err == nil {
+		t.Error("Expected error, but got nil")
+	}
+
+	expectedError := "strconv.ParseInt: parsing \"invalid\": invalid syntax"
+	if err.Error() != expectedError {
+		t.Errorf("Expected error '%s', but got '%v'", expectedError, err)
+	}
+}
+
+func TestPopulateFromCookies_InvalidUnsignedInteger(t *testing.T) {
+	// Create a mock HTTP request with cookies
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+
+	req.AddCookie(&http.Cookie{Name: "cookie", Value: "-1"})
+
+	// Create an instance of the Manager
+	manager := NewManager()
+
+	// Create a struct to populate with cookie values
+	type MyStruct struct {
+		Field uint `cookie:"cookie"`
+	}
+
+	// Call the PopulateFromCookies function
+	dest := &MyStruct{}
+	err := manager.PopulateFromCookies(req, dest)
+	if err == nil {
+		t.Error("Expected error, but got nil")
+	}
+
+	expectedError := "strconv.ParseUint: parsing \"-1\": invalid syntax"
+	if err.Error() != expectedError {
+		t.Errorf("Expected error '%s', but got '%v'", expectedError, err)
+	}
+}
+
+func TestPopulateFromCookies_InvalidFloat(t *testing.T) {
+	// Create a mock HTTP request with cookies
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+
+	req.AddCookie(&http.Cookie{Name: "cookie", Value: "invalid"})
+
+	// Create an instance of the Manager
+	manager := NewManager()
+
+	// Create a struct to populate with cookie values
+	type MyStruct struct {
+		Field float64 `cookie:"cookie"`
+	}
+
+	// Call the PopulateFromCookies function
+	dest := &MyStruct{}
+	err := manager.PopulateFromCookies(req, dest)
+	if err == nil {
+		t.Error("Expected error, but got nil")
+	}
+
+	expectedError := "strconv.ParseFloat: parsing \"invalid\": invalid syntax"
+	if err.Error() != expectedError {
+		t.Errorf("Expected error '%s', but got '%v'", expectedError, err)
+	}
+}
+
+func TestPopulateFromCookies_InvalidIntSlice(t *testing.T) {
+	// Create a mock HTTP request with cookies
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+
+	req.AddCookie(&http.Cookie{Name: "cookie", Value: "invalid"})
+
+	// Create an instance of the Manager
+	manager := NewManager()
+
+	// Create a struct to populate with cookie values
+	type MyStruct struct {
+		Field []int `cookie:"cookie"`
+	}
+
+	// Call the PopulateFromCookies function
+	dest := &MyStruct{}
+	err := manager.PopulateFromCookies(req, dest)
+	if err == nil {
+		t.Error("Expected error, but got nil")
+	}
+
+	expectedError := "strconv.Atoi: parsing \"invalid\": invalid syntax"
+	if err.Error() != expectedError {
+		t.Errorf("Expected error '%s', but got '%v'", expectedError, err)
+	}
+}
+
+func TestPopulateFromCookies_InvalidTimestamp(t *testing.T) {
+	// Create a mock HTTP request with cookies
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+
+	req.AddCookie(&http.Cookie{Name: "cookie", Value: "invalid"})
+
+	// Create an instance of the Manager
+	manager := NewManager()
+
+	// Create a struct to populate with cookie values
+	type MyStruct struct {
+		Field time.Time `cookie:"cookie"`
+	}
+
+	// Call the PopulateFromCookies function
+	dest := &MyStruct{}
+	err := manager.PopulateFromCookies(req, dest)
+	if err == nil {
+		t.Error("Expected error, but got nil")
+	}
+
+	expectedError := "parsing time \"invalid\" as \"2006-01-02T15:04:05Z07:00\": cannot parse \"invalid\" as \"2006\""
+	if err.Error() != expectedError {
+		t.Errorf("Expected error '%s', but got '%v'", expectedError, err)
+	}
+}

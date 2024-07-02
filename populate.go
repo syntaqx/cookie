@@ -49,9 +49,11 @@ func (m *Manager) PopulateFromCookies(r *http.Request, dest interface{}) error {
 		}
 
 		fieldVal := v.Field(i)
-		if !fieldVal.CanSet() {
-			continue
-		}
+
+		// TODO: Is this necessary? How can I test it?
+		// if !fieldVal.CanSet() {
+		// 	continue
+		// }
 
 		err = m.setFieldValue(fieldVal, value)
 		if err != nil {
