@@ -20,8 +20,8 @@ func SetSigned(w http.ResponseWriter, name, value string, opts ...Options) error
 	return DefaultManager.SetSigned(w, name, value, opts...)
 }
 
-func Remove(w http.ResponseWriter, name string) {
-	DefaultManager.Remove(w, name)
+func Remove(w http.ResponseWriter, name string) error {
+	return DefaultManager.Remove(w, name)
 }
 
 func PopulateFromCookies(r *http.Request, dest interface{}) error {
