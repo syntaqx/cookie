@@ -47,7 +47,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "RequestCookies: %v\n", c))
+	fmt.Fprintf(w, "RequestCookies: %v\n", c)
 }
 
 func setDemoCookies(w http.ResponseWriter) {
