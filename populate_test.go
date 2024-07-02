@@ -10,10 +10,8 @@ import (
 )
 
 func TestPopulateFromCookies(t *testing.T) {
-	// Create a mock HTTP request with cookies
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 
-	// Create an instance of the Manager
 	manager := NewManager(WithSigningKey([]byte("super-secret-key")))
 
 	value := "test"
@@ -37,7 +35,6 @@ func TestPopulateFromCookies(t *testing.T) {
 		req.AddCookie(cookie)
 	}
 
-	// Create a struct to populate with cookie values
 	type MyStruct struct {
 		UntaggedField string
 		Default       string    `cookie:"cookie1"`
@@ -52,14 +49,12 @@ func TestPopulateFromCookies(t *testing.T) {
 		Timestamp     time.Time `cookie:"cookie9"`
 	}
 
-	// Call the PopulateFromCookies function
 	dest := &MyStruct{}
 	err := manager.PopulateFromCookies(req, dest)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
 
-	// Verify the populated values
 	expected := &MyStruct{
 		Default:     value,
 		Unsigned:    value,
@@ -78,13 +73,10 @@ func TestPopulateFromCookies(t *testing.T) {
 }
 
 func TestPopulateFromCookies_NonNilPointerRequired(t *testing.T) {
-	// Create a mock HTTP request with cookies
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 
-	// Create an instance of the Manager
 	manager := NewManager()
 
-	// Call the PopulateFromCookies function with a nil pointer
 	var dest *struct{}
 	err := manager.PopulateFromCookies(req, dest)
 	if err != ErrNonNilPointerRequired {
@@ -93,18 +85,14 @@ func TestPopulateFromCookies_NonNilPointerRequired(t *testing.T) {
 }
 
 func TestPopulateFromCookies_ErrNoCookie(t *testing.T) {
-	// Create a mock HTTP request with cookies
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 
-	// Create an instance of the Manager
 	manager := NewManager()
 
-	// Create a struct to populate with cookie values
 	type MyStruct struct {
 		Field string `cookie:"cookie"`
 	}
 
-	// Call the PopulateFromCookies function
 	dest := &MyStruct{}
 	err := manager.PopulateFromCookies(req, dest)
 	if err != http.ErrNoCookie {
@@ -113,20 +101,16 @@ func TestPopulateFromCookies_ErrNoCookie(t *testing.T) {
 }
 
 func TestPopulateFromCookies_ErrUnsupportedType(t *testing.T) {
-	// Create a mock HTTP request with cookies
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 
 	req.AddCookie(&http.Cookie{Name: "cookie", Value: "test"})
 
-	// Create an instance of the Manager
 	manager := NewManager()
 
-	// Create a struct to populate with cookie values
 	type MyStruct struct {
 		Field complex128 `cookie:"cookie"`
 	}
 
-	// Call the PopulateFromCookies function
 	dest := &MyStruct{}
 	err := manager.PopulateFromCookies(req, dest)
 	if err == nil {
@@ -140,20 +124,16 @@ func TestPopulateFromCookies_ErrUnsupportedType(t *testing.T) {
 }
 
 func TestPopulateFromCookies_InvalidBoolean(t *testing.T) {
-	// Create a mock HTTP request with cookies
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 
 	req.AddCookie(&http.Cookie{Name: "cookie", Value: "invalid"})
 
-	// Create an instance of the Manager
 	manager := NewManager()
 
-	// Create a struct to populate with cookie values
 	type MyStruct struct {
 		Field bool `cookie:"cookie"`
 	}
 
-	// Call the PopulateFromCookies function
 	dest := &MyStruct{}
 	err := manager.PopulateFromCookies(req, dest)
 	if err == nil {
@@ -167,20 +147,16 @@ func TestPopulateFromCookies_InvalidBoolean(t *testing.T) {
 }
 
 func TestPopulateFromCookies_InvalidInteger(t *testing.T) {
-	// Create a mock HTTP request with cookies
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 
 	req.AddCookie(&http.Cookie{Name: "cookie", Value: "invalid"})
 
-	// Create an instance of the Manager
 	manager := NewManager()
 
-	// Create a struct to populate with cookie values
 	type MyStruct struct {
 		Field int `cookie:"cookie"`
 	}
 
-	// Call the PopulateFromCookies function
 	dest := &MyStruct{}
 	err := manager.PopulateFromCookies(req, dest)
 	if err == nil {
@@ -194,20 +170,16 @@ func TestPopulateFromCookies_InvalidInteger(t *testing.T) {
 }
 
 func TestPopulateFromCookies_InvalidUnsignedInteger(t *testing.T) {
-	// Create a mock HTTP request with cookies
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 
 	req.AddCookie(&http.Cookie{Name: "cookie", Value: "-1"})
 
-	// Create an instance of the Manager
 	manager := NewManager()
 
-	// Create a struct to populate with cookie values
 	type MyStruct struct {
 		Field uint `cookie:"cookie"`
 	}
 
-	// Call the PopulateFromCookies function
 	dest := &MyStruct{}
 	err := manager.PopulateFromCookies(req, dest)
 	if err == nil {
@@ -221,20 +193,16 @@ func TestPopulateFromCookies_InvalidUnsignedInteger(t *testing.T) {
 }
 
 func TestPopulateFromCookies_InvalidFloat(t *testing.T) {
-	// Create a mock HTTP request with cookies
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 
 	req.AddCookie(&http.Cookie{Name: "cookie", Value: "invalid"})
 
-	// Create an instance of the Manager
 	manager := NewManager()
 
-	// Create a struct to populate with cookie values
 	type MyStruct struct {
 		Field float64 `cookie:"cookie"`
 	}
 
-	// Call the PopulateFromCookies function
 	dest := &MyStruct{}
 	err := manager.PopulateFromCookies(req, dest)
 	if err == nil {
@@ -248,20 +216,16 @@ func TestPopulateFromCookies_InvalidFloat(t *testing.T) {
 }
 
 func TestPopulateFromCookies_InvalidIntSlice(t *testing.T) {
-	// Create a mock HTTP request with cookies
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 
 	req.AddCookie(&http.Cookie{Name: "cookie", Value: "invalid"})
 
-	// Create an instance of the Manager
 	manager := NewManager()
 
-	// Create a struct to populate with cookie values
 	type MyStruct struct {
 		Field []int `cookie:"cookie"`
 	}
 
-	// Call the PopulateFromCookies function
 	dest := &MyStruct{}
 	err := manager.PopulateFromCookies(req, dest)
 	if err == nil {
@@ -275,20 +239,16 @@ func TestPopulateFromCookies_InvalidIntSlice(t *testing.T) {
 }
 
 func TestPopulateFromCookies_InvalidTimestamp(t *testing.T) {
-	// Create a mock HTTP request with cookies
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 
 	req.AddCookie(&http.Cookie{Name: "cookie", Value: "invalid"})
 
-	// Create an instance of the Manager
 	manager := NewManager()
 
-	// Create a struct to populate with cookie values
 	type MyStruct struct {
 		Field time.Time `cookie:"cookie"`
 	}
 
-	// Call the PopulateFromCookies function
 	dest := &MyStruct{}
 	err := manager.PopulateFromCookies(req, dest)
 	if err == nil {
