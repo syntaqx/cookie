@@ -17,7 +17,7 @@ Cookies, but with structs, for happiness.
 
 - **Struct-based cookie values**: Easily get cookies into your structs.
 - **Signed cookies**: Ensure the integrity of your cookies with HMAC signatures.
-- **Custom type support**: Extend cookie handling with your own data types.
+- **Custom type support**: Extend cookie parsing with your own data types.
 - **Easy to use**: Simple API for managing cookies in your web applications.
 
 ## Installation
