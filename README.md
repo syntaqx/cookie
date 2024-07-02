@@ -65,6 +65,16 @@ cookie.DefaultManager = cookie.NewManager(
 )
 ```
 
+> [!TIP]
+> Cookies are stored in plaintext by default (unsigned). A signed cookie is used
+> to ensure the cookie value has not been tampered with. This is done by
+> creating a [HMAC][] signature of the cookie value using a secret key. Then,
+> when the cookie is read, the signature is verified to ensure the cookie value
+> has not been modified.
+>
+> It is still recommended that sensitive data not be stored in cookies, and that
+> HTTPS be used to prevent cookie [replay attacks][].
+
 ## Advanced Usage: Manager
 
 For more advanced usage, you can create a `Manager` to handle your cookies,
@@ -82,16 +92,6 @@ manager := cookie.NewManager(
   cookie.WithSigningKey(signingKey),
 )
 ```
-
-> [!TIP]
-> Cookies are stored in plaintext by default (unsigned). A signed cookie is used
-> to ensure the cookie value has not been tampered with. This is done by
-> creating a [HMAC][] signature of the cookie value using a secret key. Then,
-> when the cookie is read, the signature is verified to ensure the cookie value
-> has not been modified.
->
-> It is still recommended that sensitive data not be stored in cookies, and that
-> HTTPS be used to prevent cookie [replay attacks][].
 
 [HMAC]: https://en.wikipedia.org/wiki/HMAC
 [replay attacks]: https://en.wikipedia.org/wiki/Replay_attack
