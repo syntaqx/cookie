@@ -100,9 +100,7 @@ func (m *Manager) Set(w http.ResponseWriter, name, value string, opts ...Options
 	}
 
 	if o.Signed && m.signingKey != nil {
-		data := base64.URLEncoding.EncodeToString([]byte(value))
-		signature := base64.URLEncoding.EncodeToString(sign([]byte(data), m.signingKey))
-		value = data + "|" + signature
+		value = signCookieValue(value, m.signingKey)
 	}
 
 	cookie := &http.Cookie{

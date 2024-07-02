@@ -47,9 +47,7 @@ func TestManager_GetSigned(t *testing.T) {
 	cookieName := "myCookie"
 	expectedValue := "myValue"
 
-	data := base64.URLEncoding.EncodeToString([]byte(expectedValue))
-	signature := base64.URLEncoding.EncodeToString(sign([]byte(data), m.signingKey))
-	cookieValue := data + "|" + signature
+	cookieValue := signCookieValue(expectedValue, m.signingKey)
 
 	r.AddCookie(&http.Cookie{Name: cookieName, Value: cookieValue})
 
@@ -222,9 +220,7 @@ func TestManager_Set_Signed(t *testing.T) {
 		t.Errorf("Expected cookie name '%s', but got '%s'", cookieName, cookie.Name)
 	}
 
-	data := base64.URLEncoding.EncodeToString([]byte(expectedValue))
-	signature := base64.URLEncoding.EncodeToString(sign([]byte(data), m.signingKey))
-	expectedCookieValue := data + "|" + signature
+	expectedCookieValue := signCookieValue(expectedValue, m.signingKey)
 
 	if cookie.Value != expectedCookieValue {
 		t.Errorf("Expected cookie value '%s', but got '%s'", expectedCookieValue, cookie.Value)
@@ -256,9 +252,7 @@ func TestManager_SetSigned(t *testing.T) {
 		t.Errorf("Expected cookie name '%s', but got '%s'", cookieName, cookie.Name)
 	}
 
-	data := base64.URLEncoding.EncodeToString([]byte(expectedValue))
-	signature := base64.URLEncoding.EncodeToString(sign([]byte(data), m.signingKey))
-	expectedCookieValue := data + "|" + signature
+	expectedCookieValue := signCookieValue(expectedValue, m.signingKey)
 
 	if cookie.Value != expectedCookieValue {
 		t.Errorf("Expected cookie value '%s', but got '%s'", expectedCookieValue, cookie.Value)
