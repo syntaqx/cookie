@@ -5,73 +5,50 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/syntaqx/cookie"
 )
 
-type RequestCookies struct {
-	ApplicationID uuid.UUID `cookie:"Application-ID"`
-	Theme         string    `cookie:"THEME"`
-	Debug         bool      `cookie:"DEBUG"`
-	AccessToken   string    `cookie:"Access-Token,signed"`
-	UserID        int       `cookie:"User-ID,signed"`
-	IsAdmin       bool      `cookie:"Is-Admin,signed"`
-	Permissions   []string  `cookie:"Permissions,signed"`
-	ExpiresAt     time.Time `cookie:"Expires-At,signed"`
-}
-
-func handler(w http.ResponseWriter, r *http.Request) {
-	// If none of the cookies are set, we'll set them and refresh the page
-	// so the rest of the demo functions.
-	_, err := cookie.Get(r, "Application-ID")
-	if err != nil {
-		setDemoCookies(w)
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-		return
-	}
-
-	// Populate struct from cookies
-	var req RequestCookies
-	err = cookie.PopulateFromCookies(r, &req)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	// Dump the struct as a response
-	fmt.Fprintf(w, "RequestCookies: %+v", req)
-}
-
-func setDemoCookies(w http.ResponseWriter) {
-	// Set cookies
-	cookie.Set(w, "Application-ID", uuid.Must(uuid.NewV7()).String(), nil)
-	cookie.Set(w, "THEME", "default", nil)
-	cookie.Set(w, "DEBUG", "true", nil)
-
-	secureOptions := &cookie.Options{
-		Path:     "/",
-		Expires:  time.Now().Add(24 * time.Hour),
-		HttpOnly: true,
-		Secure:   true,
-	}
-
-	// Set signed cookies
-	cookie.SetSigned(w, "Access-Token", "some-access-token", secureOptions)
-	cookie.SetSigned(w, "User-ID", "123", secureOptions)
-	cookie.SetSigned(w, "Is-Admin", "true", secureOptions)
-	cookie.SetSigned(w, "Permissions", "read,write,execute", secureOptions)
-	cookie.SetSigned(w, "Expires-At", time.Now().Add(24*time.Hour).Format(time.RFC3339), secureOptions)
-}
-
 func main() {
-	cookie.DefaultOptions = &cookie.Options{
-		Path:     "/",
-		Expires:  time.Now().Add(24 * time.Hour),
-		HttpOnly: true,
-	}
+	signingKey := []byte("super-secret-key")
 
-	http.HandleFunc("/", handler)
+	manager := cookie.NewManager(
+		cookie.WithSigningKey(signingKey),
+	)
 
-	fmt.Println("Listening on :8080")
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		_, err := manager.Get(r, "DEBUG")
+		if err != nil {
+			manager.Set(w, "DEBUG", "true", cookie.Options{})
+			manager.Set(w, "THEME", "dark", cookie.Options{})
+			manager.Set(w, "Access-Token", "token_value", cookie.Options{Signed: true})
+			manager.Set(w, "User-ID", "12345", cookie.Options{Signed: true})
+			manager.Set(w, "Is-Admin", "true", cookie.Options{Signed: true})
+			manager.Set(w, "Permissions", "read,write,execute", cookie.Options{Signed: true})
+			manager.Set(w, "Friends", "1,2,3,4,5", cookie.Options{})
+			manager.Set(w, "Expires-At", time.Now().Add(24*time.Hour).Format(time.RFC3339), cookie.Options{Signed: true})
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+
+		type RequestCookies struct {
+			Theme       string    `cookie:"THEME"`
+			Debug       bool      `cookie:"DEBUG,unsigned"`
+			AccessToken string    `cookie:"Access-Token,signed"`
+			UserID      int       `cookie:"User-ID,signed"`
+			IsAdmin     bool      `cookie:"Is-Admin,signed"`
+			Permissions []string  `cookie:"Permissions,signed"`
+			Friends     []int     `cookie:"Friends,unsigned"`
+			ExpiresAt   time.Time `cookie:"Expires-At,signed"`
+		}
+
+		var c RequestCookies
+		if err := manager.PopulateFromCookies(r, &c); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Write([]byte(fmt.Sprintf("Cookies: %+v", c)))
+	})
+
+	fmt.Printf("Listening on http://localhost:8080\n")
 	http.ListenAndServe(":8080", nil)
 }

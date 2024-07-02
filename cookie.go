@@ -1,25 +1,18 @@
 package cookie
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
 	"encoding/base64"
-	"errors"
 	"net/http"
 	"reflect"
-	"strconv"
 	"strings"
 	"time"
-
-	"github.com/gofrs/uuid/v5"
 )
 
-const (
-	CookieTag         = "cookie"
-	DefaultSigningKey = "default-signing-key"
-)
+// CustomTypeHandler defines a function type for custom type handling.
+type CustomTypeHandler func(string) (interface{}, error)
 
-// Options contains the options for a cookie.
+// Options represent the options for an HTTP cookie as sent in the Set-Cookie
+// header of an HTTP response or the Cookie header of an HTTP request.
 type Options struct {
 	Path     string
 	Domain   string
@@ -31,66 +24,42 @@ type Options struct {
 	Signed   bool
 }
 
-var (
-	// SigningKey is the key used to sign cookies.
-	SigningKey = []byte(DefaultSigningKey)
-
-	// DefaultOptions are the default options for cookies.
-	DefaultOptions = &Options{
-		Path:     "/",
-		Domain:   "",
-		Expires:  time.Time{},
-		MaxAge:   0,
-		Secure:   false,
-		HttpOnly: false,
-		SameSite: http.SameSiteDefaultMode,
-		Signed:   false,
-	}
-)
-
-var (
-	// ErrInvalidSignedFormat is returned when a signed cookie is not in the correct format.
-	ErrInvalidSignedFormat = errors.New("cookie: invalid signed cookie format")
-
-	// ErrInvalidSignature is returned when a signed cookie has an invalid signature.
-	ErrInvalidSignature = errors.New("cookie: invalid cookie signature")
-)
-
-// ErrUnsupportedType is returned when a field type is not supported.
-type ErrUnsupportedType struct {
-	Type reflect.Type
+// Manager handles cookie operations.
+type Manager struct {
+	signingKey     []byte
+	customHandlers map[reflect.Type]CustomTypeHandler
 }
 
-// Error returns the error message.
-func (e *ErrUnsupportedType) Error() string {
-	return "cookie: unsupported type: " + e.Type.String()
+// Option is a function type for configuring the Manager.
+type Option func(*Manager)
+
+// WithSigningKey sets the signing key for the Manager.
+func WithSigningKey(key []byte) Option {
+	return func(m *Manager) {
+		m.signingKey = key
+	}
 }
 
-// Set sets a cookie with the given name, value, and options.
-func Set(w http.ResponseWriter, name, value string, options *Options) {
-	mergedOptions := mergeOptions(options, DefaultOptions)
-	cookie := &http.Cookie{
-		Name:     name,
-		Value:    value,
-		Path:     mergedOptions.Path,
-		Domain:   mergedOptions.Domain,
-		Expires:  mergedOptions.Expires,
-		MaxAge:   mergedOptions.MaxAge,
-		Secure:   mergedOptions.Secure,
-		HttpOnly: mergedOptions.HttpOnly,
-		SameSite: mergedOptions.SameSite,
+// WithCustomHandler registers a custom type handler for the Manager.
+func WithCustomHandler(typ reflect.Type, handler CustomTypeHandler) Option {
+	return func(m *Manager) {
+		m.customHandlers[typ] = handler
 	}
-
-	if mergedOptions.Signed {
-		signature := generateHMAC(value)
-		cookie.Value = base64.URLEncoding.EncodeToString([]byte(value)) + "|" + signature
-	}
-
-	http.SetCookie(w, cookie)
 }
 
-// Get retrieves the plaintext value of a cookie with the given name.
-func Get(r *http.Request, name string) (string, error) {
+// NewManager creates a new Manager with the given options.
+func NewManager(opts ...Option) *Manager {
+	m := &Manager{
+		customHandlers: make(map[reflect.Type]CustomTypeHandler),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// Get retrieves the value of an unsigned cookie.
+func (m *Manager) Get(r *http.Request, name string) (string, error) {
 	cookie, err := r.Cookie(name)
 	if err != nil {
 		return "", err
@@ -98,190 +67,80 @@ func Get(r *http.Request, name string) (string, error) {
 	return cookie.Value, nil
 }
 
-// SetSigned sets a signed cookie with the given name, value, and options.
-func SetSigned(w http.ResponseWriter, name, value string, options *Options) {
-	if options == nil {
-		options = &Options{}
-	}
-
-	options.Signed = true
-	Set(w, name, value, options)
-}
-
-// GetSigned retrieves the value of a signed cookie with the given name.
-func GetSigned(r *http.Request, name string) (string, error) {
-	signedValue, err := Get(r, name)
+// GetSigned retrieves the value of a signed cookie.
+func (m *Manager) GetSigned(r *http.Request, name string) (string, error) {
+	value, err := m.Get(r, name)
 	if err != nil {
 		return "", err
 	}
 
-	parts := strings.SplitN(signedValue, "|", 2)
+	parts := strings.Split(value, "|")
 	if len(parts) != 2 {
-		return "", ErrInvalidSignedFormat
+		return "", ErrInvalidSignedCookieFormat
 	}
 
-	value, err := base64.URLEncoding.DecodeString(parts[0])
+	data, signature := parts[0], parts[1]
+	dataBytes, err := base64.URLEncoding.DecodeString(data)
+	if err != nil {
+		return "", err
+	}
+	signatureBytes, err := base64.URLEncoding.DecodeString(signature)
 	if err != nil {
 		return "", err
 	}
 
-	signature, err := base64.URLEncoding.DecodeString(parts[1])
-	if err != nil {
-		return "", err
+	if verify([]byte(data), signatureBytes, m.signingKey) {
+		return string(dataBytes), nil
 	}
-
-	h := hmac.New(sha256.New, SigningKey)
-	h.Write(value)
-	expectedSignature := h.Sum(nil)
-
-	if !hmac.Equal(signature, expectedSignature) {
-		return "", ErrInvalidSignature
-	}
-
-	return string(value), nil
+	return "", ErrInvalidCookieSignature
 }
 
-// Remove removes a cookie by setting its MaxAge to -1.
-func Remove(w http.ResponseWriter, name string) {
+// Set sets the value of a cookie.
+func (m *Manager) Set(w http.ResponseWriter, name, value string, opts ...Options) error {
+	var o Options
+	if len(opts) > 0 {
+		o = opts[0]
+	}
+
+	if o.Signed && m.signingKey != nil {
+		data := base64.URLEncoding.EncodeToString([]byte(value))
+		signature := base64.URLEncoding.EncodeToString(sign([]byte(data), m.signingKey))
+		value = data + "|" + signature
+	}
+
 	cookie := &http.Cookie{
-		Name:   name,
-		Value:  "",
-		Path:   "/",
-		MaxAge: -1,
+		Name:     name,
+		Value:    value,
+		Path:     o.Path,
+		Domain:   o.Domain,
+		Expires:  o.Expires,
+		MaxAge:   o.MaxAge,
+		Secure:   o.Secure,
+		HttpOnly: o.HttpOnly,
+		SameSite: o.SameSite,
 	}
+
 	http.SetCookie(w, cookie)
-}
-
-// PopulateFromCookies populates the fields of a struct based on cookie tags.
-func PopulateFromCookies(r *http.Request, dest interface{}) error {
-	val := reflect.ValueOf(dest).Elem()
-	typ := val.Type()
-
-	for i := 0; i < val.NumField(); i++ {
-		field := val.Field(i)
-		fieldType := typ.Field(i)
-		tag := fieldType.Tag.Get(CookieTag)
-		tagParts := strings.Split(tag, ",")
-
-		if tagParts[0] == "" {
-			continue
-		}
-
-		var cookie string
-		var err error
-		isSigned := DefaultOptions.Signed
-
-		for _, part := range tagParts[1:] {
-			if part == "signed" {
-				isSigned = true
-			} else if part == "unsigned" {
-				isSigned = false
-			}
-		}
-
-		if isSigned {
-			cookie, err = GetSigned(r, tagParts[0])
-		} else {
-			cookie, err = Get(r, tagParts[0])
-		}
-
-		if err != nil {
-			return err
-		}
-
-		switch field.Kind() {
-		case reflect.String:
-			field.SetString(cookie)
-		case reflect.Int:
-			intVal, err := strconv.Atoi(cookie)
-			if err != nil {
-				return err
-			}
-			field.SetInt(int64(intVal))
-		case reflect.Bool:
-			boolVal, err := strconv.ParseBool(cookie)
-			if err != nil {
-				return err
-			}
-			field.SetBool(boolVal)
-		case reflect.Slice:
-			switch fieldType.Type.Elem().Kind() {
-			case reflect.String:
-				field.Set(reflect.ValueOf(strings.Split(cookie, ",")))
-			case reflect.Int:
-				intStrings := strings.Split(cookie, ",")
-				intSlice := make([]int, len(intStrings))
-				for i, s := range intStrings {
-					intVal, err := strconv.Atoi(s)
-					if err != nil {
-						return err
-					}
-					intSlice[i] = intVal
-				}
-				field.Set(reflect.ValueOf(intSlice))
-			default:
-				return &ErrUnsupportedType{fieldType.Type}
-			}
-		case reflect.Array:
-			if fieldType.Type == reflect.TypeOf(uuid.UUID{}) {
-				uid, err := uuid.FromString(cookie)
-				if err != nil {
-					return err
-				}
-				field.Set(reflect.ValueOf(uid))
-			}
-		case reflect.Struct:
-			if fieldType.Type == reflect.TypeOf(time.Time{}) {
-				timeVal, err := time.Parse(time.RFC3339, cookie)
-				if err != nil {
-					return err
-				}
-				field.Set(reflect.ValueOf(timeVal))
-			}
-		default:
-			return &ErrUnsupportedType{fieldType.Type}
-		}
-	}
 	return nil
 }
 
-func generateHMAC(value string) string {
-	h := hmac.New(sha256.New, SigningKey)
-	h.Write([]byte(value))
-	return base64.URLEncoding.EncodeToString(h.Sum(nil))
-}
-
-func mergeOptions(provided, defaults *Options) *Options {
-	if provided == nil {
-		return defaults
+// Remove deletes a cookie.
+func (m *Manager) Remove(w http.ResponseWriter, name string, opts ...Options) error {
+	var o Options
+	if len(opts) > 0 {
+		o = opts[0]
 	}
-
-	merged := *defaults
-
-	if provided.Path != "" {
-		merged.Path = provided.Path
+	cookie := &http.Cookie{
+		Name:     name,
+		Value:    "",
+		Path:     o.Path,
+		Domain:   o.Domain,
+		Expires:  time.Unix(0, 0),
+		MaxAge:   -1,
+		Secure:   o.Secure,
+		HttpOnly: o.HttpOnly,
+		SameSite: o.SameSite,
 	}
-	if provided.Domain != "" {
-		merged.Domain = provided.Domain
-	}
-	if !provided.Expires.IsZero() {
-		merged.Expires = provided.Expires
-	}
-	if provided.MaxAge != 0 {
-		merged.MaxAge = provided.MaxAge
-	}
-	if provided.Secure {
-		merged.Secure = provided.Secure
-	}
-	if provided.HttpOnly {
-		merged.HttpOnly = provided.HttpOnly
-	}
-	if provided.SameSite != http.SameSiteDefaultMode {
-		merged.SameSite = provided.SameSite
-	}
-	if provided.Signed {
-		merged.Signed = provided.Signed
-	}
-
-	return &merged
+	http.SetCookie(w, cookie)
+	return nil
 }
