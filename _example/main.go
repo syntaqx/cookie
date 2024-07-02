@@ -8,8 +8,6 @@ import (
 	"github.com/syntaqx/cookie"
 )
 
-var signingKey = []byte("super-secret-key")
-
 var defaultCookieOptions = cookie.Options{
 	HttpOnly: true,
 }
@@ -20,10 +18,8 @@ var signedCookieOptions = cookie.Options{
 	Signed:   true,
 }
 
-var manager *cookie.Manager
-
 func handler(w http.ResponseWriter, r *http.Request) {
-	_, err := manager.Get(r, "DEBUG")
+	_, err := cookie.Get(r, "DEBUG")
 	if err != nil {
 		setDemoCookies(w)
 		http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -43,7 +39,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var c RequestCookies
-	if err := manager.PopulateFromCookies(r, &c); err != nil {
+	if err := cookie.PopulateFromCookies(r, &c); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -52,20 +48,29 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func setDemoCookies(w http.ResponseWriter) {
-	manager.Set(w, "DEBUG", "true", defaultCookieOptions)
-	manager.Set(w, "THEME", "dark", defaultCookieOptions)
-	manager.Set(w, "Access-Token", "token_value", signedCookieOptions)
-	manager.Set(w, "User-ID", "12345", signedCookieOptions)
-	manager.Set(w, "Is-Admin", "true", signedCookieOptions)
-	manager.Set(w, "Permissions", "read,write,execute", signedCookieOptions)
-	manager.Set(w, "Friends", "1,2,3,4,5", defaultCookieOptions)
-	manager.Set(w, "Expires-At", time.Now().Add(24*time.Hour).Format(time.RFC3339), signedCookieOptions)
+	cookie.Set(w, "DEBUG", "true", defaultCookieOptions)
+	cookie.Set(w, "THEME", "dark", defaultCookieOptions)
+	cookie.Set(w, "Access-Token", "token_value", signedCookieOptions)
+	cookie.Set(w, "User-ID", "12345", signedCookieOptions)
+	cookie.Set(w, "Is-Admin", "true", signedCookieOptions)
+	cookie.Set(w, "Permissions", "read,write,execute", signedCookieOptions)
+	cookie.Set(w, "Friends", "1,2,3,4,5", defaultCookieOptions)
+	cookie.Set(w, "Expires-At", time.Now().Add(24*time.Hour).Format(time.RFC3339), signedCookieOptions)
 }
 
 func main() {
-	manager = cookie.NewManager(
-		cookie.WithSigningKey(signingKey),
+	// Create a new cookie manager with a signing key.
+	manager := cookie.NewManager(
+		cookie.WithSigningKey([]byte("super-secret-key")),
 	)
+
+	// Set the default manager to the one we just created. This allows us to use
+	// the default package functions without having to pass the manager.
+	//
+	// This is optional, as you can create a new manager and pass it through to
+	// the functions that require it, potentially allowing you to have different
+	// managers with different options.
+	cookie.DefaultManager = manager
 
 	http.HandleFunc("/", handler)
 
