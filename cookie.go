@@ -55,7 +55,7 @@ func NewManager(opts ...Option) *Manager {
 	return m
 }
 
-// Get retrieves the value of an unsigned cookie.
+// Get retrieves an unsigned cooke value.
 func (m *Manager) Get(r *http.Request, name string) (string, error) {
 	cookie, err := r.Cookie(name)
 	if err != nil {
@@ -64,7 +64,7 @@ func (m *Manager) Get(r *http.Request, name string) (string, error) {
 	return cookie.Value, nil
 }
 
-// GetSigned retrieves the value of a signed cookie.
+// GetSigned retrieves a signed cookie value.
 func (m *Manager) GetSigned(r *http.Request, name string) (string, error) {
 	value, err := m.Get(r, name)
 	if err != nil {
@@ -119,7 +119,7 @@ func (m *Manager) Set(w http.ResponseWriter, name, value string, opts ...Options
 	return nil
 }
 
-// SetSigned sets the value of a signed cookie.
+// SetSigned sets a signed value of a cookie.
 func (m *Manager) SetSigned(w http.ResponseWriter, name, value string, opts ...Options) error {
 	var o Options
 	if len(opts) > 0 {
@@ -129,7 +129,7 @@ func (m *Manager) SetSigned(w http.ResponseWriter, name, value string, opts ...O
 	return m.Set(w, name, value, o)
 }
 
-// Remove deletes a cookie.
+// Remove removes a cookie from the response.
 func (m *Manager) Remove(w http.ResponseWriter, name string, opts ...Options) error {
 	var o Options
 	if len(opts) > 0 {
