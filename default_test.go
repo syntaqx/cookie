@@ -8,7 +8,7 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	req, err := http.NewRequest("GET", "/", nil)
+	req, err := http.NewRequest(http.MethodGet, "/", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,7 +54,7 @@ func TestGetSigned(t *testing.T) {
 }
 
 func TestSet(t *testing.T) {
-	_, err := http.NewRequest("GET", "/", nil)
+	_, err := http.NewRequest(http.MethodGet, "/", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -152,7 +152,7 @@ func TestSetSigned(t *testing.T) {
 
 func TestRemove(t *testing.T) {
 	// Create a mock request
-	_, err := http.NewRequest("GET", "/", nil)
+	_, err := http.NewRequest(http.MethodGet, "/", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
