@@ -161,7 +161,10 @@ func TestRemove(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	// Call the Remove function
-	Remove(rr, "cookieName")
+	err = Remove(rr, "cookieName")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
 
 	// Check if the cookie was set in the response
 	cookie := rr.Result().Cookies()[0]
