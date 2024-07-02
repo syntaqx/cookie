@@ -1,7 +1,6 @@
 package cookie
 
 import (
-	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -27,19 +26,14 @@ func TestGet(t *testing.T) {
 }
 
 func TestGetSigned(t *testing.T) {
-	m := NewManager(
-		WithSigningKey([]byte("super-secret-key")),
-	)
-	DefaultManager = m
+	DefaultManager = signedManager
 
 	r, _ := http.NewRequest(http.MethodGet, "/", nil)
 
 	cookieName := "myCookie"
 	expectedValue := "myValue"
 
-	data := base64.URLEncoding.EncodeToString([]byte(expectedValue))
-	signature := base64.URLEncoding.EncodeToString(sign([]byte(data), m.signingKey))
-	cookieValue := data + "|" + signature
+	cookieValue := signCookieValue(expectedValue, signedManager.signingKey)
 
 	r.AddCookie(&http.Cookie{Name: cookieName, Value: cookieValue})
 
@@ -77,11 +71,7 @@ func TestSet(t *testing.T) {
 }
 
 func TestSet_Signed(t *testing.T) {
-	m := NewManager(
-		WithSigningKey([]byte("super-secret-key")),
-	)
-
-	DefaultManager = m
+	DefaultManager = signedManager
 
 	w := httptest.NewRecorder()
 
@@ -104,21 +94,14 @@ func TestSet_Signed(t *testing.T) {
 		t.Errorf("Expected cookie name '%s', but got '%s'", cookieName, cookie.Name)
 	}
 
-	data := base64.URLEncoding.EncodeToString([]byte(expectedValue))
-	signature := base64.URLEncoding.EncodeToString(sign([]byte(data), m.signingKey))
-	expectedCookieValue := data + "|" + signature
-
+	expectedCookieValue := signCookieValue(expectedValue, signedManager.signingKey)
 	if cookie.Value != expectedCookieValue {
 		t.Errorf("Expected cookie value '%s', but got '%s'", expectedCookieValue, cookie.Value)
 	}
 }
 
 func TestSetSigned(t *testing.T) {
-	m := NewManager(
-		WithSigningKey([]byte("super-secret-key")),
-	)
-
-	DefaultManager = m
+	DefaultManager = signedManager
 
 	w := httptest.NewRecorder()
 
@@ -141,10 +124,7 @@ func TestSetSigned(t *testing.T) {
 		t.Errorf("Expected cookie name '%s', but got '%s'", cookieName, cookie.Name)
 	}
 
-	data := base64.URLEncoding.EncodeToString([]byte(expectedValue))
-	signature := base64.URLEncoding.EncodeToString(sign([]byte(data), m.signingKey))
-	expectedCookieValue := data + "|" + signature
-
+	expectedCookieValue := signCookieValue(expectedValue, signedManager.signingKey)
 	if cookie.Value != expectedCookieValue {
 		t.Errorf("Expected cookie value '%s', but got '%s'", expectedCookieValue, cookie.Value)
 	}
@@ -177,13 +157,11 @@ func TestRemove(t *testing.T) {
 }
 
 func TestPopulateFromCookies(t *testing.T) {
+	DefaultManager = signedManager
 	value := "test"
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.AddCookie(&http.Cookie{Name: "cookie1", Value: value})
-
-	manager := NewManager(WithSigningKey([]byte("super-secret-key")))
-	DefaultManager = manager
 
 	type MyStruct struct {
 		Default string `cookie:"cookie1"`

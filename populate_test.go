@@ -1,7 +1,6 @@
 package cookie
 
 import (
-	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -12,12 +11,8 @@ import (
 func TestManager_PopulateFromCookies(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 
-	manager := NewManager(WithSigningKey([]byte("super-secret-key")))
-
 	value := "test"
-	data := base64.URLEncoding.EncodeToString([]byte(value))
-	signature := base64.URLEncoding.EncodeToString(sign([]byte(data), manager.signingKey))
-	signedValue := data + "|" + signature
+	signedValue := signCookieValue(value, signedManager.signingKey)
 
 	cookies := []*http.Cookie{
 		{Name: "cookie1", Value: value},
@@ -50,7 +45,7 @@ func TestManager_PopulateFromCookies(t *testing.T) {
 	}
 
 	dest := &MyStruct{}
-	err := manager.PopulateFromCookies(req, dest)
+	err := signedManager.PopulateFromCookies(req, dest)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -75,10 +70,8 @@ func TestManager_PopulateFromCookies(t *testing.T) {
 func TestPopulateFromCookies_NonNilPointerRequired(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 
-	manager := NewManager()
-
 	var dest *struct{}
-	err := manager.PopulateFromCookies(req, dest)
+	err := unsignedManager.PopulateFromCookies(req, dest)
 	if err != ErrNonNilPointerRequired {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -87,14 +80,12 @@ func TestPopulateFromCookies_NonNilPointerRequired(t *testing.T) {
 func TestPopulateFromCookies_ErrNoCookie(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 
-	manager := NewManager()
-
 	type MyStruct struct {
 		Field string `cookie:"cookie"`
 	}
 
 	dest := &MyStruct{}
-	err := manager.PopulateFromCookies(req, dest)
+	err := unsignedManager.PopulateFromCookies(req, dest)
 	if err != http.ErrNoCookie {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -105,14 +96,12 @@ func TestPopulateFromCookies_ErrUnsupportedType(t *testing.T) {
 
 	req.AddCookie(&http.Cookie{Name: "cookie", Value: "test"})
 
-	manager := NewManager()
-
 	type MyStruct struct {
 		Field complex128 `cookie:"cookie"`
 	}
 
 	dest := &MyStruct{}
-	err := manager.PopulateFromCookies(req, dest)
+	err := unsignedManager.PopulateFromCookies(req, dest)
 	if err == nil {
 		t.Error("Expected error, but got nil")
 	}
@@ -125,17 +114,14 @@ func TestPopulateFromCookies_ErrUnsupportedType(t *testing.T) {
 
 func TestPopulateFromCookies_InvalidBoolean(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-
 	req.AddCookie(&http.Cookie{Name: "cookie", Value: "invalid"})
-
-	manager := NewManager()
 
 	type MyStruct struct {
 		Field bool `cookie:"cookie"`
 	}
 
 	dest := &MyStruct{}
-	err := manager.PopulateFromCookies(req, dest)
+	err := unsignedManager.PopulateFromCookies(req, dest)
 	if err == nil {
 		t.Error("Expected error, but got nil")
 	}
@@ -148,17 +134,14 @@ func TestPopulateFromCookies_InvalidBoolean(t *testing.T) {
 
 func TestPopulateFromCookies_InvalidInteger(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-
 	req.AddCookie(&http.Cookie{Name: "cookie", Value: "invalid"})
-
-	manager := NewManager()
 
 	type MyStruct struct {
 		Field int `cookie:"cookie"`
 	}
 
 	dest := &MyStruct{}
-	err := manager.PopulateFromCookies(req, dest)
+	err := unsignedManager.PopulateFromCookies(req, dest)
 	if err == nil {
 		t.Error("Expected error, but got nil")
 	}
@@ -171,17 +154,14 @@ func TestPopulateFromCookies_InvalidInteger(t *testing.T) {
 
 func TestPopulateFromCookies_InvalidUnsignedInteger(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-
 	req.AddCookie(&http.Cookie{Name: "cookie", Value: "-1"})
-
-	manager := NewManager()
 
 	type MyStruct struct {
 		Field uint `cookie:"cookie"`
 	}
 
 	dest := &MyStruct{}
-	err := manager.PopulateFromCookies(req, dest)
+	err := unsignedManager.PopulateFromCookies(req, dest)
 	if err == nil {
 		t.Error("Expected error, but got nil")
 	}
@@ -194,17 +174,14 @@ func TestPopulateFromCookies_InvalidUnsignedInteger(t *testing.T) {
 
 func TestPopulateFromCookies_InvalidFloat(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-
 	req.AddCookie(&http.Cookie{Name: "cookie", Value: "invalid"})
-
-	manager := NewManager()
 
 	type MyStruct struct {
 		Field float64 `cookie:"cookie"`
 	}
 
 	dest := &MyStruct{}
-	err := manager.PopulateFromCookies(req, dest)
+	err := unsignedManager.PopulateFromCookies(req, dest)
 	if err == nil {
 		t.Error("Expected error, but got nil")
 	}
@@ -217,17 +194,14 @@ func TestPopulateFromCookies_InvalidFloat(t *testing.T) {
 
 func TestPopulateFromCookies_InvalidIntSlice(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-
 	req.AddCookie(&http.Cookie{Name: "cookie", Value: "invalid"})
-
-	manager := NewManager()
 
 	type MyStruct struct {
 		Field []int `cookie:"cookie"`
 	}
 
 	dest := &MyStruct{}
-	err := manager.PopulateFromCookies(req, dest)
+	err := unsignedManager.PopulateFromCookies(req, dest)
 	if err == nil {
 		t.Error("Expected error, but got nil")
 	}
@@ -240,17 +214,14 @@ func TestPopulateFromCookies_InvalidIntSlice(t *testing.T) {
 
 func TestPopulateFromCookies_InvalidTimestamp(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-
 	req.AddCookie(&http.Cookie{Name: "cookie", Value: "invalid"})
-
-	manager := NewManager()
 
 	type MyStruct struct {
 		Field time.Time `cookie:"cookie"`
 	}
 
 	dest := &MyStruct{}
-	err := manager.PopulateFromCookies(req, dest)
+	err := unsignedManager.PopulateFromCookies(req, dest)
 	if err == nil {
 		t.Error("Expected error, but got nil")
 	}
