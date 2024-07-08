@@ -145,7 +145,7 @@ To support custom types, register a custom handler with the Manager.
 import (
   "reflect"
   "github.com/gofrs/uuid/v5"
-  "github.com/syntaqx/manager"
+  "github.com/syntaqx/cookie"
 )
 
 ...
