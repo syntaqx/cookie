@@ -60,6 +60,6 @@ jobs:
         run: cat .codecov.yml | curl --data-binary @- https://codecov.io/validate
       -
         name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4.5.0
+        uses: codecov/codecov-action@v5.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
