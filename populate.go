@@ -31,11 +31,12 @@ func (m *Manager) PopulateFromCookies(r *http.Request, dest interface{}) error {
 		omitempty := false
 
 		for _, part := range parts[1:] {
-			if part == "signed" {
+			switch part {
+			case "signed":
 				signed = true
-			} else if part == "unsigned" {
+			case "unsigned":
 				unsigned = true
-			} else if part == "omitempty" {
+			case "omitempty":
 				omitempty = true
 			}
 		}
