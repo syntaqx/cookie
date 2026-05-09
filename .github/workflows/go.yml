@@ -40,7 +40,7 @@ jobs:
         run: go test -race -coverprofile=coverage.out -covermode=atomic ./...
       -
         name: Upload Coverage Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: code-coverage-report
           path: coverage.out
