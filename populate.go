@@ -11,7 +11,7 @@ import (
 // PopulateFromCookies populates a struct with cookie values.
 func (m *Manager) PopulateFromCookies(r *http.Request, dest interface{}) error {
 	v := reflect.ValueOf(dest)
-	if v.Kind() != reflect.Ptr || v.IsNil() {
+	if v.Kind() != reflect.Pointer || v.IsNil() {
 		return ErrNonNilPointerRequired
 	}
 	v = v.Elem()
